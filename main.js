@@ -17,7 +17,7 @@ import { renderHomePage } from "./ui.js";
     );
 
     triconnectAPI.ui.setMenu({
-      title: "Portail de Liens", // Le nom qui apparaîtra dans le menu Trimble
+      title: "ECNA 'Titre Thibaut'", // Le nom qui apparaîtra dans le menu Trimble
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension" // La commande envoyée lors du clic
     });
