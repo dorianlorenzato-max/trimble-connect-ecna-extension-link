@@ -22,14 +22,6 @@ import { renderHomePage } from "./ui.js";
       command: "open_extension" // La commande envoyée lors du clic
     });
 
-    // AJOUT : On écoute la commande envoyée par le menu
-    triconnectAPI.extension.oncommand.subscribe((command) => {
-      if (command === "open_extension") {
-        // Quand l'utilisateur clique sur le menu, on affiche la page d'accueil
-        renderHomePage(mainContentDiv);
-      }
-    });
-
     // 2. Affichage de la page d'accueil au chargement initial
     renderHomePage(mainContentDiv);
 
