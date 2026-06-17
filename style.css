@@ -1,0 +1,171 @@
+/* === STYLES GÉNÉRAUX === */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #f0f0f0;
+  color: #333;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.main-content h1 {
+  color: #003a72; /* Bleu institutionnel Eiffage */
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* === BANDEAU SUPÉRIEUR === */
+.header-banner {
+  background-color: #ff0101; /* Rouge Eiffage */
+  padding: 10px 20px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.header-banner button {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.header-banner button:hover {
+  background-color: #e0e0e0;
+  color: #003a72;
+}
+
+/* === STYLES UNIFIÉS POUR LES BOUTONS === */
+.button-primary,
+.button-secondary,
+.button-danger,
+.config-button {
+  /* config-button est un alias pour button-primary dans votre code */
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition:
+    background-color 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.button-primary,
+.config-button {
+  background-color: #005a70; /* Bleu-vert Eiffage */
+  color: white;
+}
+.button-primary:hover,
+.config-button:hover {
+  background-color: #007a93;
+}
+.button-primary:disabled,
+.config-button:disabled {
+  background-color: #999;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  background-color: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
+}
+.button-secondary:hover {
+  background-color: #d0d0d0;
+}
+
+.button-danger {
+  background-color: #d9534f;
+  color: white;
+}
+.button-danger:hover {
+  background-color: #c9302c;
+}
+
+.button-small {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+/* === MESSAGES DE RETOUR (Succès, Sauvegarde, Erreur) === */
+.message-container {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+.message-container.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+.message-container h2 {
+  margin-top: 0;
+}
+.config-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+/* === PAGE D'ACCUEIL === */
+.home-container {
+  max-width: 600px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.home-container h1 {
+  color: #003a72; /* Bleu institutionnel Eiffage */
+}
+
+.home-container p {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+}
+
+.home-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.home-button-list button {
+  width: 100%;
+  max-width: 350px;
+  padding: 15px 20px;
+  font-size: 1.1rem;
+  background-color: #005a70; /* Bleu-vert Eiffage */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.home-button-list button:hover {
+  background-color: #007a93;
+}
