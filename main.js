@@ -1,6 +1,11 @@
 // On importe les fonctions depuis nos modules
 import { renderHomePage } from "./ui.js";
-import { fetchUserProjectRole, fetchLinksConfiguration } from "./api.js";
+import {
+  fetchUserProjectRole,
+  fetchLinksConfiguration,
+  getProjectRootId,
+  findOrCreateFolder,
+} from "./api.js";
 
 // Exécution dans une fonction auto-appelée pour ne pas polluer l'espace global
 (async function () {
@@ -41,30 +46,29 @@ import { fetchUserProjectRole, fetchLinksConfiguration } from "./api.js";
           globalAccessToken,
         );
         if (userRole === "ADMIN") {
-          configBtn.style.display = "block"; // On affiche le bouton si admin
+          configBtn.style.display = "block";
         }
 
-        // B. Récupérer l'ID du dossier racine et trouver/créer notre dossier de config
-        // Note: pour l'instant, on va juste simuler la récupération du configFolderId
-        // Nous allons réintégrer la logique complète de findOrCreateFolder à la prochaine étape.
-        // Pour ce test, il faut créer manuellement un dossier "Configuration_Links" à la racine.
-        const rootFolders = await triconnectAPI.project.getRootFolders();
-        const foundFolder = rootFolders.find(
-          (f) => f.name === "Configuration_Links",
+        // B. Récupérer l'ID du dossier racine
+        const projectRootId = await getProjectRootId(
+          triconnectAPI,
+          globalAccessToken,
         );
-        if (!foundFolder) {
-          mainContentDiv.innerHTML = `<p style="color:orange;">Veuillez créer un dossier nommé "Configuration_Links" à la racine du projet.</p>`;
-          return;
-        }
-        configFolderId = foundFolder.id;
 
-        // C. Charger la configuration des liens
+        // C. Trouver ou créer notre dossier de configuration (plus besoin de le faire manuellement !)
+        configFolderId = await findOrCreateFolder(
+          projectRootId,
+          "Configuration_Links",
+          globalAccessToken,
+        );
+
+        // D. Charger la configuration des liens
         const links = await fetchLinksConfiguration(
           globalAccessToken,
           configFolderId,
         );
 
-        // D. Afficher la page d'accueil avec les données chargées
+        // E. Afficher la page d'accueil avec les données chargées
         renderHomePage(mainContentDiv, links);
       } catch (error) {
         console.error("Erreur lors du chargement des données :", error);
