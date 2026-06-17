@@ -16,15 +16,28 @@ import { renderHomePage } from "./ui.js";
       30000,
     );
 
-    // 2. Affichage de la page d'accueil
+    triconnectAPI.ui.setMenu({
+      title: "Portail de Liens", // Le nom qui apparaîtra dans le menu Trimble
+      icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
+      command: "open_extension" // La commande envoyée lors du clic
+    });
+
+    // AJOUT : On écoute la commande envoyée par le menu
+    triconnectAPI.extension.oncommand.subscribe((command) => {
+      if (command === "open_extension") {
+        // Quand l'utilisateur clique sur le menu, on affiche la page d'accueil
+        renderHomePage(mainContentDiv);
+      }
+    });
+
+    // 2. Affichage de la page d'accueil au chargement initial
     renderHomePage(mainContentDiv);
 
     // 3. Attacher l'événement au bouton de configuration
     configBtn.addEventListener("click", () => {
-      // Pour l'instant, un simple message.
-      // Nous développerons cette partie plus tard.
       alert("La page de configuration sera implémentée ici !");
     });
+
   } catch (error) {
     console.error("Erreur lors de l'initialisation de l'extension :", error);
     mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
