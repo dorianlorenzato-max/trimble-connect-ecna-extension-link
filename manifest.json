@@ -4,5 +4,5 @@
   "url": "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension-link/index.html",
   "description": "Extension permettant d'accéder rapidement à un ensemble de liens utiles.",
   "configCommand": "",
-  "enabled": false
+  "enabled": true
 }
