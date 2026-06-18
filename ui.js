@@ -18,7 +18,9 @@ function renderHomePage(container, links, appState) {
       </div>
     `
     : "";
-
+  const editModeClass = appState.editMode === "edit" ? "edit-mode-active" : "";
+  const deleteModeClass =
+    appState.editMode === "delete" ? "delete-mode-active" : "";
   const buttonsHtml =
     links.length > 0
       ? links
@@ -32,7 +34,7 @@ function renderHomePage(container, links, appState) {
       : "<p>Aucun lien n'est configuré.</p>";
 
   container.innerHTML = `
-    <div class="home-container">
+    <div class="home-container ${editModeClass} ${deleteModeClass}">
         ${configControlsHtml}
         <h1>Portail de Liens</h1>
         <p>Accédez rapidement à vos ressources externes.</p>
@@ -44,24 +46,29 @@ function renderHomePage(container, links, appState) {
 }
 /**
  * Affiche une modale pour ajouter ou modifier un lien.
- * @param {function} onConfirm - La fonction à appeler lorsque l'utilisateur valide.
- *                               Elle recevra le nom et l'url en arguments.
+ * @param {function} onConfirm - La fonction de callback.
+ * @param {object} [defaultValues] - Optionnel: Les valeurs pour pré-remplir les champs.
+ * @param {string} [defaultValues.name] - Le nom par défaut.
+ * @param {string} [defaultValues.url] - L'URL par défaut.
  */
 function renderLinkModal(onConfirm) {
   // Crée l'overlay et la modale
+  const initialName = defaultValues.name || "";
+  const initialUrl = defaultValues.url || "";
+  const title = initialName ? "Modifier le lien" : "Ajouter un lien";
   const modalOverlay = document.createElement("div");
   modalOverlay.className = "modal-overlay";
   modalOverlay.innerHTML = `
     <div class="modal-content">
-      <h2>Ajouter un lien</h2>
+      <h2>${title}</h2>
       <div class="modal-form">
         <div class="form-group">
           <label for="link-name-input">Nom du lien</label>
-          <input type="text" id="link-name-input" placeholder="Ex: Intranet Eiffage">
+          <input type="text" id="link-name-input" value="${initialName}" placeholder="Ex: Intranet Eiffage">
         </div>
         <div class="form-group">
           <label for="link-url-input">URL du lien</label>
-          <input type="text" id="link-url-input" placeholder="Ex: https://intranet.eiffage.com">
+          <input type="text" id="link-url-input" value="${initialUrl}" placeholder="Ex: https://intranet.eiffage.com">
         </div>
       </div>
       <div class="modal-actions">
