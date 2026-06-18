@@ -88,11 +88,16 @@ import {
           );
           window.open(link.url, "_blank");
         } else if (appState.editMode === "delete") {
-          // AJOUT : Log pour tracer l'appel
+          //  Log pour tracer l'appel
           console.log(
             `Mode 'delete' détecté. Appel de handleDeleteLink pour l'index ${index}...`,
           );
           handleDeleteLink(index);
+        } else if (appState.editMode === "edit") {
+          console.log(
+            `Mode 'edit' détecté. Appel de handleEditLink pour l'index ${index}...`,
+          );
+          handleEditLink(index);
         } else {
           console.log(
             `Clic ignoré car le mode est '${appState.editMode}', pas 'view'.`,
