@@ -24,12 +24,10 @@ function renderHomePage(container, links, appState) {
   const buttonsHtml =
     links.length > 0
       ? links
-          .map(
-            (link) =>
-              `<button class="link-button" data-url="${link.url}" data-name="${link.name}">
-          ${link.name}
-        </button>`,
-          )
+          .map((link, index) => {
+            const escapedName = link.name.replace(/"/g, "&quot;");
+            return `<button class="link-button" data-index="${index}" data-url="${link.url}" data-name="${escapedName}">${link.name}</button>`;
+          })
           .join("")
       : "<p>Aucun lien n'est configuré.</p>";
   const finishButtonHtml =
