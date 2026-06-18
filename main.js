@@ -29,8 +29,9 @@ import {
     attachEventListeners(); // On attache les écouteurs APRÈS avoir dessiné l'interface.
   }
 
-  // CORRECTION : On revient à une fonction qui attache les écouteurs aux éléments existants.
+  //  On revient à une fonction qui attache les écouteurs aux éléments existants.
   function attachEventListeners() {
+    console.log("Appel de attachEventListeners...");
     // 1. Gérer les boutons de configuration
     if (appState.isConfigModeActive) {
       document
@@ -43,6 +44,9 @@ import {
       document
         .getElementById("delete-link-btn")
         .addEventListener("click", () => {
+          appState.editMode =
+            appState.editMode === "delete" ? "view" : "delete";
+          rerenderUI();
           appState.editMode =
             appState.editMode === "delete" ? "view" : "delete";
           rerenderUI();
@@ -59,23 +63,38 @@ import {
     }
 
     // 3. Gérer les clics sur chaque "bouton lien" individuellement
-    document.querySelectorAll(".link-button").forEach((button) => {
+    const linkButtons = document.querySelectorAll(".link-button");
+    console.log(`${linkButtons.length} "boutons liens" trouvés.`);
+    linkButtons.forEach((button) => {
       button.addEventListener("click", () => {
+        // AJOUT : Logs détaillés à l'intérieur du clic.
+        console.log("--- Clic sur un bouton lien détecté ---");
+        console.log("Mode d'édition actuel :", appState.editMode);
+
         const index = parseInt(button.dataset.index, 10);
+        console.log("Index du bouton :", index);
+
         const link = appState.links[index];
+        console.log("Lien correspondant dans l'état :", link);
 
-        if (!link) return; // Sécurité
+        if (!link) {
+          console.error(
+            "ERREUR : Impossible de trouver le lien correspondant à cet index. L'état de l'application est peut-être désynchronisé.",
+          );
+          return;
+        }
 
-        switch (appState.editMode) {
-          case "view":
-            window.open(link.url, "_blank");
-            break;
-          case "edit":
-            handleEditLink(index);
-            break;
-          case "delete":
-            handleDeleteLink(index);
-            break;
+        // Pour cette étape, on ne gère que le mode 'view'.
+        if (appState.editMode === "view") {
+          console.log(
+            "Mode 'view' actif. Tentative d'ouverture de l'URL :",
+            link.url,
+          );
+          window.open(link.url, "_blank");
+        } else {
+          console.log(
+            `Clic ignoré car le mode est '${appState.editMode}', pas 'view'.`,
+          );
         }
       });
     });
@@ -143,7 +162,7 @@ import {
     currentProjectId = projectInfo.id;
 
     triconnectAPI.ui.setMenu({
-      title: "Portail de Liens",
+      title: "ECNA Liens URLs",
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension",
     });
