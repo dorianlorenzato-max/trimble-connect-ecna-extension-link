@@ -5,6 +5,7 @@ import {
   fetchLinksConfiguration,
   getProjectRootId,
   findOrCreateFolder,
+  saveLinksConfiguration,
 } from "./api.js";
 
 // Exécution dans une fonction auto-appelée pour ne pas polluer l'espace global
@@ -14,7 +15,12 @@ import {
   let triconnectAPI;
   let globalAccessToken;
   let currentProjectId;
-  let configFolderId; // On aura besoin de cet ID bientôt
+  let configFolderId;
+  let appState = {
+    isConfigModeActive: false, // Les boutons de gestion sont-ils visibles ?
+    editMode: "view", // 'view', 'add', 'edit', 'delete'
+    links: [], // La liste des liens chargés
+  };
 
   try {
     // 1. Connexion à l'API Trimble Connect
@@ -36,6 +42,10 @@ import {
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension", // La commande envoyée lors du clic
     });
+
+    function rerenderUI() {
+      renderHomePage(mainContentDiv, appState.links, appState);
+    }
     async function loadInitialDataAndRender() {
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
@@ -63,13 +73,13 @@ import {
         );
 
         // D. Charger la configuration des liens
-        const links = await fetchLinksConfiguration(
+        appState.links = await fetchLinksConfiguration(
           globalAccessToken,
           configFolderId,
         );
 
         // E. Afficher la page d'accueil avec les données chargées
-        renderHomePage(mainContentDiv, links);
+        rerenderUI();
       } catch (error) {
         console.error("Erreur lors du chargement des données :", error);
         mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
@@ -81,7 +91,14 @@ import {
 
     // 3. Attacher l'événement au bouton de configuration
     configBtn.addEventListener("click", () => {
-      alert("La page de configuration sera implémentée ici !");
+      // On inverse l'état du mode configuration
+      appState.isConfigModeActive = !appState.isConfigModeActive;
+      // Si on quitte le mode config, on repasse en mode 'vue' par sécurité
+      if (!appState.isConfigModeActive) {
+        appState.editMode = "view";
+      }
+      // On redessine l'interface pour afficher ou cacher les boutons
+      rerenderUI();
     });
   } catch (error) {
     console.error("Erreur lors de l'initialisation de l'extension :", error);
