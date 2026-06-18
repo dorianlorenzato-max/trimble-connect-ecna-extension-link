@@ -249,3 +249,11 @@ body {
 .delete-mode-active .link-button {
   box-shadow: 0 0 0 2px #d9534f; /* Ajoute un halo rouge pour la suppression */
 }
+/* === BOUTON TERMINER === */
+.finish-editing-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 100;
+  padding: 12px 20px;
+}
