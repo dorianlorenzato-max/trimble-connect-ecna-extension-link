@@ -237,3 +237,15 @@ body {
   padding-top: 20px;
   border-top: 1px solid #eee;
 }
+/* === STYLES POUR LES MODES D'ÉDITION === */
+
+/* Change le curseur pour indiquer qu'on peut interagir avec les boutons */
+.edit-mode-active .link-button,
+.delete-mode-active .link-button {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px #007bff; /* Ajoute un halo bleu */
+}
+
+.delete-mode-active .link-button {
+  box-shadow: 0 0 0 2px #d9534f; /* Ajoute un halo rouge pour la suppression */
+}
