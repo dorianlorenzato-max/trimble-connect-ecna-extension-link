@@ -33,7 +33,7 @@ function renderHomePage(container, links, appState) {
 
   container.innerHTML = `
     <div class="home-container">
-        ${configControlsHtml} {/* Les boutons de gestion s'affichent ici */}
+        ${configControlsHtml}
         <h1>Portail de Liens</h1>
         <p>Accédez rapidement à vos ressources externes.</p>
         <div class="home-button-list">
@@ -42,6 +42,56 @@ function renderHomePage(container, links, appState) {
     </div>
   `;
 }
+/**
+ * Affiche une modale pour ajouter ou modifier un lien.
+ * @param {function} onConfirm - La fonction à appeler lorsque l'utilisateur valide.
+ *                               Elle recevra le nom et l'url en arguments.
+ */
+function renderLinkModal(onConfirm) {
+  // Crée l'overlay et la modale
+  const modalOverlay = document.createElement("div");
+  modalOverlay.className = "modal-overlay";
+  modalOverlay.innerHTML = `
+    <div class="modal-content">
+      <h2>Ajouter un lien</h2>
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="link-name-input">Nom du lien</label>
+          <input type="text" id="link-name-input" placeholder="Ex: Intranet Eiffage">
+        </div>
+        <div class="form-group">
+          <label for="link-url-input">URL du lien</label>
+          <input type="text" id="link-url-input" placeholder="Ex: https://intranet.eiffage.com">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancel-modal-btn" class="button-secondary">Annuler</button>
+        <button id="confirm-modal-btn" class="button-primary">Valider</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalOverlay);
 
+  // Logique interne de la modale
+  const closeModal = () => document.body.removeChild(modalOverlay);
+
+  document
+    .getElementById("cancel-modal-btn")
+    .addEventListener("click", closeModal);
+
+  document.getElementById("confirm-modal-btn").addEventListener("click", () => {
+    const name = document.getElementById("link-name-input").value.trim();
+    const url = document.getElementById("link-url-input").value.trim();
+
+    if (!name || !url) {
+      alert("Veuillez remplir le nom et l'URL du lien.");
+      return;
+    }
+
+    // Appelle la fonction de callback avec les données saisies
+    onConfirm(name, url);
+    closeModal();
+  });
+}
 // On exporte toujours la fonction
-export { renderHomePage };
+export { renderHomePage, renderLinkModal };
