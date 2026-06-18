@@ -57,8 +57,8 @@ function renderHomePage(container, links, appState) {
  */
 function renderLinkModal(onConfirm) {
   // Crée l'overlay et la modale
-  const initialName = (defaultValues && defaultValues.name) || "";
-  const initialUrl = (defaultValues && defaultValues.url) || "";
+  const initialName = defaultValues.name || "";
+  const initialUrl = defaultValues.url || "";
   const title = initialName ? "Modifier le lien" : "Ajouter un lien";
 
   const modalOverlay = document.createElement("div");
@@ -69,11 +69,11 @@ function renderLinkModal(onConfirm) {
       <div class="modal-form">
         <div class="form-group">
           <label for="link-name-input">Nom du lien</label>
-          <input type="text" id="link-name-input" value="${initialName}" placeholder="Ex: Intranet Eiffage">
+          <input type="text" id="link-name-input" value="${initialName}" placeholder="Ex: Site Eiffage">
         </div>
         <div class="form-group">
           <label for="link-url-input">URL du lien</label>
-          <input type="text" id="link-url-input" value="${initialUrl}" placeholder="Ex: https://intranet.eiffage.com">
+          <input type="text" id="link-url-input" value="${initialUrl}" placeholder="Ex: https://www.eiffage.com/">
         </div>
       </div>
       <div class="modal-actions">
