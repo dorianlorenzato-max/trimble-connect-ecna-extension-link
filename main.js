@@ -47,9 +47,6 @@ import {
           appState.editMode =
             appState.editMode === "delete" ? "view" : "delete";
           rerenderUI();
-          appState.editMode =
-            appState.editMode === "delete" ? "view" : "delete";
-          rerenderUI();
         });
     }
 
@@ -67,7 +64,6 @@ import {
     console.log(`${linkButtons.length} "boutons liens" trouvés.`);
     linkButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        // AJOUT : Logs détaillés à l'intérieur du clic.
         console.log("--- Clic sur un bouton lien détecté ---");
         console.log("Mode d'édition actuel :", appState.editMode);
 
@@ -91,6 +87,12 @@ import {
             link.url,
           );
           window.open(link.url, "_blank");
+        } else if (appState.editMode === "delete") {
+          // AJOUT : Log pour tracer l'appel
+          console.log(
+            `Mode 'delete' détecté. Appel de handleDeleteLink pour l'index ${index}...`,
+          );
+          handleDeleteLink(index);
         } else {
           console.log(
             `Clic ignoré car le mode est '${appState.editMode}', pas 'view'.`,
