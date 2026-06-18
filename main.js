@@ -149,11 +149,11 @@ import {
     });
 
     // Correction de la coquille
-    triconnectAPI.onCommand.subscribe((command) => {
-      if (command === "open_extension") {
-        loadInitialDataAndRender();
-      }
-    });
+    //triconnectAPI.onCommand.subscribe((command) => {
+    // if (command === "open_extension") {
+    loadInitialDataAndRender();
+    // }
+    //});
 
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
