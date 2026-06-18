@@ -95,7 +95,7 @@ import {
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension",
     });
-    triconnectAPI.oncommand.subscribe(
+    triconnectAPI.onCommand.subscribe(
       (command) => command === "open_extension" && loadInitialDataAndRender(),
     );
 
