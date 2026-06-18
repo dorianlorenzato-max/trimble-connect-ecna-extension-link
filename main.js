@@ -95,56 +95,57 @@ import {
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension",
     });
-    triconnectAPI.onCommand.subscribe(
-      (command) => command === "open_extension" && loadInitialDataAndRender(),
-    );
+    /*triconnectAPI.onCommand.subscribe(
+      (command) => command === "open_extension" &&*/ (loadInitialDataAndRender(),
+      // );
 
-    //  GESTIONNAIRE D'ÉVÉNEMENTS UNIQUE (EVENT DELEGATION)
-    // Ce gestionnaire est attaché au corps du document et ne sera jamais supprimé.
-    document.body.addEventListener("click", (event) => {
-      const target = event.target;
+      //  GESTIONNAIRE D'ÉVÉNEMENTS UNIQUE (EVENT DELEGATION)
+      // Ce gestionnaire est attaché au corps du document et ne sera jamais supprimé.
+      document.body.addEventListener("click", (event) => {
+        const target = event.target;
 
-      // Clic sur le bouton "Configuration" du bandeau
-      if (target.id === "config-btn") {
-        appState.isConfigModeActive = !appState.isConfigModeActive;
-        if (!appState.isConfigModeActive) appState.editMode = "view";
-        rerenderUI();
-      }
-      // Clic sur "Ajouter"
-      else if (target.id === "add-link-btn") handleAddLink();
-      // Clic sur "Modifier" (agit comme un interrupteur)
-      else if (target.id === "edit-link-btn") {
-        appState.editMode = appState.editMode === "edit" ? "view" : "edit";
-        rerenderUI();
-      }
-      // Clic sur "Supprimer" (agit comme un interrupteur)
-      else if (target.id === "delete-link-btn") {
-        appState.editMode = appState.editMode === "delete" ? "view" : "delete";
-        rerenderUI();
-      }
-      // Clic sur "Terminer"
-      else if (target.id === "finish-editing-btn") {
-        appState.editMode = "view";
-        rerenderUI();
-      }
-      // Clic sur un "bouton lien"
-      else if (target.classList.contains("link-button")) {
-        const index = parseInt(target.dataset.index, 10);
-        if (isNaN(index) || !appState.links[index]) return; // Sécurité
-
-        switch (appState.editMode) {
-          case "view":
-            window.open(appState.links[index].url, "_blank");
-            break;
-          case "edit":
-            handleEditLink(index);
-            break;
-          case "delete":
-            handleDeleteLink(index);
-            break;
+        // Clic sur le bouton "Configuration" du bandeau
+        if (target.id === "config-btn") {
+          appState.isConfigModeActive = !appState.isConfigModeActive;
+          if (!appState.isConfigModeActive) appState.editMode = "view";
+          rerenderUI();
         }
-      }
-    });
+        // Clic sur "Ajouter"
+        else if (target.id === "add-link-btn") handleAddLink();
+        // Clic sur "Modifier" (agit comme un interrupteur)
+        else if (target.id === "edit-link-btn") {
+          appState.editMode = appState.editMode === "edit" ? "view" : "edit";
+          rerenderUI();
+        }
+        // Clic sur "Supprimer" (agit comme un interrupteur)
+        else if (target.id === "delete-link-btn") {
+          appState.editMode =
+            appState.editMode === "delete" ? "view" : "delete";
+          rerenderUI();
+        }
+        // Clic sur "Terminer"
+        else if (target.id === "finish-editing-btn") {
+          appState.editMode = "view";
+          rerenderUI();
+        }
+        // Clic sur un "bouton lien"
+        else if (target.classList.contains("link-button")) {
+          const index = parseInt(target.dataset.index, 10);
+          if (isNaN(index) || !appState.links[index]) return; // Sécurité
+
+          switch (appState.editMode) {
+            case "view":
+              window.open(appState.links[index].url, "_blank");
+              break;
+            case "edit":
+              handleEditLink(index);
+              break;
+            case "delete":
+              handleDeleteLink(index);
+              break;
+          }
+        }
+      }));
 
     // Chargement initial des données
     async function loadInitialDataAndRender() {
