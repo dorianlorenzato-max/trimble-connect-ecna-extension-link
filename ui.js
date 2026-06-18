@@ -32,7 +32,10 @@ function renderHomePage(container, links, appState) {
           )
           .join("")
       : "<p>Aucun lien n'est configuré.</p>";
-
+  const finishButtonHtml =
+    appState.editMode === "edit" || appState.editMode === "delete"
+      ? `<button id="finish-editing-btn" class="button-primary finish-editing-btn">Terminer</button>`
+      : "";
   container.innerHTML = `
     <div class="home-container ${editModeClass} ${deleteModeClass}">
         ${configControlsHtml}
@@ -42,6 +45,7 @@ function renderHomePage(container, links, appState) {
             ${buttonsHtml}
         </div>
     </div>
+    ${finishButtonHtml} 
   `;
 }
 /**
@@ -53,9 +57,10 @@ function renderHomePage(container, links, appState) {
  */
 function renderLinkModal(onConfirm) {
   // Crée l'overlay et la modale
-  const initialName = defaultValues.name || "";
-  const initialUrl = defaultValues.url || "";
+  const initialName = (defaultValues && defaultValues.name) || "";
+  const initialUrl = (defaultValues && defaultValues.url) || "";
   const title = initialName ? "Modifier le lien" : "Ajouter un lien";
+
   const modalOverlay = document.createElement("div");
   modalOverlay.className = "modal-overlay";
   modalOverlay.innerHTML = `
