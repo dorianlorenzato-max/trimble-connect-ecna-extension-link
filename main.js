@@ -44,42 +44,50 @@ import {
     });
 
     function rerenderUI() {
+      // 1. Dessine l'interface
       renderHomePage(mainContentDiv, appState.links, appState);
-      attachEventListeners(); // On appelle une nouvelle fonction pour gérer les événements
+
+      // 2. Attache les écouteurs d'événements après le dessin
+      attachEventListeners();
     }
 
     // fonction dédiée pour attacher les écouteurs d'événements
     function attachEventListeners() {
-      // Écouteur pour le bouton "Ajouter"
+      // Boutons de gestion
       const addBtn = document.getElementById("add-link-btn");
       if (addBtn) addBtn.addEventListener("click", handleAddLink);
 
-      //  Écouteurs pour les  boutons de gestion modifier et supprimer
       const editBtn = document.getElementById("edit-link-btn");
       if (editBtn)
         editBtn.addEventListener("click", () => {
-          appState.editMode = "edit";
-          rerenderUI(); // Redessine pour appliquer le style visuel
+          // Si on est déjà en mode edit, on le quitte. Sinon, on y entre.
+          appState.editMode = appState.editMode === "edit" ? "view" : "edit";
+          rerenderUI();
         });
 
       const deleteBtn = document.getElementById("delete-link-btn");
       if (deleteBtn)
         deleteBtn.addEventListener("click", () => {
-          appState.editMode = "delete";
-          rerenderUI(); // Redessine pour appliquer le style visuel
+          appState.editMode =
+            appState.editMode === "delete" ? "view" : "delete";
+          rerenderUI();
         });
 
-      //  Écouteur global pour les "boutons liens"
-      const buttonList = document.querySelector(".home-button-list");
-      if (buttonList) {
-        buttonList.addEventListener("click", (event) => {
-          // On s'assure qu'on a bien cliqué sur un bouton et pas à côté
-          if (event.target.classList.contains("link-button")) {
-            handleLinkClick(event.target);
-          }
+      const finishBtn = document.getElementById("finish-editing-btn");
+      if (finishBtn)
+        finishBtn.addEventListener("click", () => {
+          appState.editMode = "view";
+          rerenderUI();
         });
-      }
+
+      // Écouteur pour TOUS les "boutons liens"
+      document.querySelectorAll(".link-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          handleLinkClick(button);
+        });
+      });
     }
+
     //  La fonction centrale qui gère le clic sur un "bouton lien"
     function handleLinkClick(button) {
       const index = parseInt(button.dataset.index, 10);
@@ -101,33 +109,22 @@ import {
 
     //  fonction qui gère la logique du clic sur "Ajouter"
     function handleAddLink() {
-      appState.editMode = "add";
-
-      // La fonction de callback qui sera exécutée après la validation de la modale
       const onAddConfirm = async (name, url) => {
-        // Ajoute le nouveau lien à notre état local
         appState.links.push({ name, url });
-
         try {
-          // Sauvegarde la nouvelle liste complète sur Trimble Connect
           await saveLinksConfiguration(
             globalAccessToken,
             configFolderId,
             appState.links,
           );
-          console.log("Configuration des liens sauvegardée avec succès.");
         } catch (error) {
-          console.error("Échec de la sauvegarde de la configuration :", error);
-          // Optionnel : annuler l'ajout local si la sauvegarde échoue
+          console.error("Échec de la sauvegarde :", error);
           appState.links.pop();
           alert("Erreur : Impossible de sauvegarder le nouveau lien.");
         }
-
-        // Redessine l'interface pour afficher le nouveau bouton
         rerenderUI();
       };
-
-      // Affiche la modale et lui passe la fonction de callback
+      // On appelle la modale sans second argument pour l'ajout.
       renderLinkModal(onAddConfirm);
     }
 
