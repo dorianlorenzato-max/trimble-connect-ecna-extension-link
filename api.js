@@ -128,6 +128,58 @@ async function fetchLinksConfiguration(accessToken, configFolderId) {
   const links = await contentResponse.json();
   return links;
 }
+/**
+ * Sauvegarde la configuration des liens dans un fichier JSON sur Trimble Connect.
+ * @param {string} accessToken - Le jeton d'accès.
+ * @param {string} configFolderId - L'ID du dossier de configuration.
+ * @param {Array} linksData - Le tableau des liens à sauvegarder.
+ * @returns {Promise<object>} Les détails du fichier sauvegardé.
+ */
+async function saveLinksConfiguration(accessToken, configFolderId, linksData) {
+  const fileName = "links-config.json";
+  const jsonString = JSON.stringify(linksData, null, 2);
+  const fileBlob = new Blob([jsonString], { type: "application/json" });
+
+  // 1. Initier l'upload
+  const initiateUrl = `https://app21.connect.trimble.com/tc/api/2.0/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
+  const initiateResponse = await fetch(initiateUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: fileName }),
+  });
+  if (!initiateResponse.ok)
+    throw new Error("L'initiation de l'upload a échoué.");
+
+  const uploadDetails = await initiateResponse.json();
+  const finalUploadUrl = uploadDetails.contents[0].url;
+  const uploadId = uploadDetails.uploadId;
+
+  // 2. Uploader le contenu
+  const uploadResponse = await fetch(finalUploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: fileBlob,
+  });
+  if (!uploadResponse.ok) throw new Error("L'upload du fichier a échoué.");
+
+  // 3. Vérifier l'upload
+  const verifyUrl = `https://app21.connect.trimble.com/tc/api/2.0/files/fs/upload?uploadId=${uploadId}&wait=true`;
+  const verifyResponse = await fetch(verifyUrl, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!verifyResponse.ok)
+    throw new Error("La vérification de l'upload a échoué.");
+
+  const finalFileDetails = await verifyResponse.json();
+  if (finalFileDetails.status !== "DONE")
+    throw new Error("Le traitement du fichier sur le serveur a échoué.");
+
+  return finalFileDetails;
+}
 
 // Exporte les fonctions pour les rendre utilisables dans main.js
 export {
@@ -135,4 +187,5 @@ export {
   fetchLinksConfiguration,
   getProjectRootId,
   findOrCreateFolder,
+  saveLinksConfiguration,
 };
