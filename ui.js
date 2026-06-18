@@ -55,7 +55,7 @@ function renderHomePage(container, links, appState) {
  * @param {string} [defaultValues.name] - Le nom par défaut.
  * @param {string} [defaultValues.url] - L'URL par défaut.
  */
-function renderLinkModal(onConfirm) {
+function renderLinkModal(onConfirm, defaultValues = {}) {
   // Crée l'overlay et la modale
   const initialName = defaultValues.name || "";
   const initialUrl = defaultValues.url || "";
