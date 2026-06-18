@@ -1,5 +1,5 @@
 // On importe les fonctions depuis nos modules
-import { renderHomePage } from "./ui.js";
+import { renderHomePage, renderLinkModal } from "./ui.js";
 import {
   fetchUserProjectRole,
   fetchLinksConfiguration,
@@ -45,7 +45,50 @@ import {
 
     function rerenderUI() {
       renderHomePage(mainContentDiv, appState.links, appState);
+      attachEventListeners(); // On appelle une nouvelle fonction pour gérer les événements
     }
+
+    // fonction dédiée pour attacher les écouteurs d'événements
+    function attachEventListeners() {
+      // Écouteur pour le bouton "Ajouter"
+      const addBtn = document.getElementById("add-link-btn");
+      if (addBtn) {
+        addBtn.addEventListener("click", handleAddLink);
+      }
+    }
+
+    //  fonction qui gère la logique du clic sur "Ajouter"
+    function handleAddLink() {
+      appState.editMode = "add";
+
+      // La fonction de callback qui sera exécutée après la validation de la modale
+      const onAddConfirm = async (name, url) => {
+        // Ajoute le nouveau lien à notre état local
+        appState.links.push({ name, url });
+
+        try {
+          // Sauvegarde la nouvelle liste complète sur Trimble Connect
+          await saveLinksConfiguration(
+            globalAccessToken,
+            configFolderId,
+            appState.links,
+          );
+          console.log("Configuration des liens sauvegardée avec succès.");
+        } catch (error) {
+          console.error("Échec de la sauvegarde de la configuration :", error);
+          // Optionnel : annuler l'ajout local si la sauvegarde échoue
+          appState.links.pop();
+          alert("Erreur : Impossible de sauvegarder le nouveau lien.");
+        }
+
+        // Redessine l'interface pour afficher le nouveau bouton
+        rerenderUI();
+      };
+
+      // Affiche la modale et lui passe la fonction de callback
+      renderLinkModal(onAddConfirm);
+    }
+
     async function loadInitialDataAndRender() {
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
