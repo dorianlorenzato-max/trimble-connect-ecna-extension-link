@@ -52,8 +52,50 @@ import {
     function attachEventListeners() {
       // Écouteur pour le bouton "Ajouter"
       const addBtn = document.getElementById("add-link-btn");
-      if (addBtn) {
-        addBtn.addEventListener("click", handleAddLink);
+      if (addBtn) addBtn.addEventListener("click", handleAddLink);
+
+      //  Écouteurs pour les  boutons de gestion modifier et supprimer
+      const editBtn = document.getElementById("edit-link-btn");
+      if (editBtn)
+        editBtn.addEventListener("click", () => {
+          appState.editMode = "edit";
+          rerenderUI(); // Redessine pour appliquer le style visuel
+        });
+
+      const deleteBtn = document.getElementById("delete-link-btn");
+      if (deleteBtn)
+        deleteBtn.addEventListener("click", () => {
+          appState.editMode = "delete";
+          rerenderUI(); // Redessine pour appliquer le style visuel
+        });
+
+      //  Écouteur global pour les "boutons liens"
+      const buttonList = document.querySelector(".home-button-list");
+      if (buttonList) {
+        buttonList.addEventListener("click", (event) => {
+          // On s'assure qu'on a bien cliqué sur un bouton et pas à côté
+          if (event.target.classList.contains("link-button")) {
+            handleLinkClick(event.target);
+          }
+        });
+      }
+    }
+    //  La fonction centrale qui gère le clic sur un "bouton lien"
+    function handleLinkClick(button) {
+      const index = parseInt(button.dataset.index, 10);
+      const link = appState.links[index];
+
+      switch (appState.editMode) {
+        case "view":
+          // Comportement par défaut : ouvrir le lien
+          window.open(link.url, "_blank");
+          break;
+        case "edit":
+          handleEditLink(index);
+          break;
+        case "delete":
+          handleDeleteLink(index);
+          break;
       }
     }
 
@@ -87,6 +129,66 @@ import {
 
       // Affiche la modale et lui passe la fonction de callback
       renderLinkModal(onAddConfirm);
+    }
+
+    // La fonction pour gérer la logique de modification
+    function handleEditLink(index) {
+      const linkToEdit = appState.links[index];
+
+      const onEditConfirm = async (newName, newUrl) => {
+        // Met à jour le lien dans notre état local
+        appState.links[index] = { name: newName, url: newUrl };
+
+        try {
+          await saveLinksConfiguration(
+            globalAccessToken,
+            configFolderId,
+            appState.links,
+          );
+          console.log("Configuration mise à jour avec succès.");
+        } catch (error) {
+          console.error("Échec de la mise à jour :", error);
+          // Annuler la modification locale en cas d'échec
+          appState.links[index] = linkToEdit;
+          alert("Erreur : Impossible de sauvegarder la modification.");
+        }
+
+        appState.editMode = "view"; // On quitte le mode édition
+        rerenderUI();
+      };
+
+      // Affiche la modale en lui passant les valeurs actuelles du lien
+      renderLinkModal(onEditConfirm, linkToEdit);
+    }
+    // La fonction pour gérer la logique de suppression
+    async function handleDeleteLink(index) {
+      const linkToDelete = appState.links[index];
+
+      if (
+        confirm(
+          `Êtes-vous sûr de vouloir supprimer le lien "${linkToDelete.name}" ?`,
+        )
+      ) {
+        // Supprime le lien de notre état local
+        appState.links.splice(index, 1);
+
+        try {
+          await saveLinksConfiguration(
+            globalAccessToken,
+            configFolderId,
+            appState.links,
+          );
+          console.log("Lien supprimé et configuration sauvegardée.");
+        } catch (error) {
+          console.error("Échec de la suppression :", error);
+          // Annuler la suppression locale en cas d'échec
+          appState.links.splice(index, 0, linkToDelete);
+          alert("Erreur : Impossible de sauvegarder la suppression.");
+        }
+
+        appState.editMode = "view"; // On quitte le mode suppression
+        rerenderUI();
+      }
     }
 
     async function loadInitialDataAndRender() {
