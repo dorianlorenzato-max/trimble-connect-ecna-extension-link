@@ -169,26 +169,35 @@ import {
     currentProjectId = projectInfo.id;
 
     try {
-        // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
-        console.log("--- Objet triconnectAPI complet pour le débogage ---");
-        console.log(triconnectAPI);
-        console.log("--------------------------------------------------");
-  
-        // La méthode correcte est de lire la propriété 'server' dans l'objet 'info'
-        if (triconnectAPI.info && triconnectAPI.info.server) {
-          const serverHostname = triconnectAPI.info.server; // ex: "app-eu.connect.trimble.com"
-          
-          console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
-          console.log("Hostname du serveur détecté via triconnectAPI.info.server :", serverHostname);
-          console.log("L'URL de base à utiliser pour les appels API devrait donc être :", `https://${serverHostname}`);
-          console.log("-------------------------------------------");
-  
-        } else {
-          console.warn("AVERTISSEMENT : La propriété 'triconnectAPI.info.server' n'a pas été trouvée.");
-        }
-      } catch (debugError) {
-        console.error("ERREUR lors de la tentative d'affichage des informations de débogage :", debugError);
+      // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
+      console.log("--- Objet triconnectAPI complet pour le débogage ---");
+      console.log(triconnectAPI);
+      console.log(
+        "Tentative de récupération des informations de l'hôte via triconnectAPI.extension.getHost()...",
+      );
+
+      const hostData = await triconnectAPI.extension.getHost();
+
+      if (hostData && hostData.origin) {
+        console.log("--- DÉTECTION DE L'HÔTE RÉUSSIE ---");
+        console.log("Données de l'hôte reçues :", hostData);
+        console.log(
+          "L'URL d'origine de l'application Trimble Connect est :",
+          hostData.origin,
+        );
+        console.log("------------------------------------");
+      } else {
+        console.warn(
+          "AVERTISSEMENT : triconnectAPI.extension.getHost() n'a pas retourné l'objet attendu.",
+          hostData,
+        );
       }
+    } catch (hostError) {
+      console.error(
+        "ERREUR lors de l'appel à triconnectAPI.extension.getHost() :",
+        hostError,
+      );
+    }
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
