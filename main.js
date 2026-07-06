@@ -169,27 +169,26 @@ import {
     currentProjectId = projectInfo.id;
 
     try {
-      // 'tc-api' est l'identifiant pour le service de l'API REST de Trimble Connect.
-      console.log("test de récupération ENDPOINT ");
-      const endpointData = await triconnectAPI.getServiceEndpoint("tc-api");
-      if (endpointData && endpointData.url) {
-        console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
-        console.log(
-          "Endpoint de l'API REST détecté pour cet utilisateur :",
-          endpointData.url,
-        );
-        console.log("-------------------------------------------");
-      } else {
-        console.warn(
-          "AVERTISSEMENT : Impossible de récupérer l'endpoint dynamique. L'objet retourné est invalide.",
-        );
+        // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
+        console.log("--- Objet triconnectAPI complet pour le débogage ---");
+        console.log(triconnectAPI);
+        console.log("--------------------------------------------------");
+  
+        // La méthode correcte est de lire la propriété 'server' dans l'objet 'info'
+        if (triconnectAPI.info && triconnectAPI.info.server) {
+          const serverHostname = triconnectAPI.info.server; // ex: "app-eu.connect.trimble.com"
+          
+          console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
+          console.log("Hostname du serveur détecté via triconnectAPI.info.server :", serverHostname);
+          console.log("L'URL de base à utiliser pour les appels API devrait donc être :", `https://${serverHostname}`);
+          console.log("-------------------------------------------");
+  
+        } else {
+          console.warn("AVERTISSEMENT : La propriété 'triconnectAPI.info.server' n'a pas été trouvée.");
+        }
+      } catch (debugError) {
+        console.error("ERREUR lors de la tentative d'affichage des informations de débogage :", debugError);
       }
-    } catch (endpointError) {
-      console.error(
-        "ERREUR lors de la tentative de récupération de l'endpoint dynamique :",
-        endpointError,
-      );
-    }
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
