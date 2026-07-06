@@ -168,18 +168,27 @@ import {
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
+    try {
+      // 'tc-api' est l'identifiant pour le service de l'API REST de Trimble Connect.
+      const endpointData = await triconnectAPI.getServiceEndpoint("tc-api");
+      if (endpointData && endpointData.url) {
+          console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
+          console.log("Endpoint de l'API REST détecté pour cet utilisateur :", endpointData.url);
+          console.log("-------------------------------------------");
+      } else {
+          console.warn("AVERTISSEMENT : Impossible de récupérer l'endpoint dynamique. L'objet retourné est invalide.");
+      }
+    } catch (endpointError) {
+      console.error("ERREUR lors de la tentative de récupération de l'endpoint dynamique :", endpointError);
+    }
+
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "open_extension",
     });
 
-    // Correction de la coquille
-    //triconnectAPI.onCommand.subscribe((command) => {
-    // if (command === "open_extension") {
     loadInitialDataAndRender();
-    // }
-    //});
 
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
