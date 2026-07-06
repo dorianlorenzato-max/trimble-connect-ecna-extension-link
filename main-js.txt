@@ -168,37 +168,6 @@ import {
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
-    try {
-      // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
-      console.log("--- Objet triconnectAPI complet pour le débogage ---");
-      console.log(triconnectAPI);
-      console.log(
-        "Tentative de récupération des informations de l'hôte via triconnectAPI.extension.getHost()...",
-      );
-
-      const hostData = await triconnectAPI.extension.getHost();
-
-      if (hostData && hostData.origin) {
-        console.log("--- DÉTECTION DE L'HÔTE RÉUSSIE ---");
-        console.log("Données de l'hôte reçues :", hostData);
-        console.log(
-          "L'URL d'origine de l'application Trimble Connect est :",
-          hostData.origin,
-        );
-        console.log("------------------------------------");
-      } else {
-        console.warn(
-          "AVERTISSEMENT : triconnectAPI.extension.getHost() n'a pas retourné l'objet attendu.",
-          hostData,
-        );
-      }
-    } catch (hostError) {
-      console.error(
-        "ERREUR lors de l'appel à triconnectAPI.extension.getHost() :",
-        hostError,
-      );
-    }
-
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
