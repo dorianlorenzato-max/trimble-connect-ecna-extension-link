@@ -8,6 +8,7 @@ import {
   saveLinksConfiguration,
 } from "./api.js";
 
+
 // Exécution dans une fonction auto-appelée pour ne pas polluer l'espace global
 (async function () {
   const mainContentDiv = document.getElementById("mainContent");
