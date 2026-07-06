@@ -170,16 +170,25 @@ import {
 
     try {
       // 'tc-api' est l'identifiant pour le service de l'API REST de Trimble Connect.
+      console.log("test de récupération ENDPOINT ");
       const endpointData = await triconnectAPI.getServiceEndpoint("tc-api");
       if (endpointData && endpointData.url) {
-          console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
-          console.log("Endpoint de l'API REST détecté pour cet utilisateur :", endpointData.url);
-          console.log("-------------------------------------------");
+        console.log("--- DÉTECTION DE L'ENDPOINT DYNAMIQUE ---");
+        console.log(
+          "Endpoint de l'API REST détecté pour cet utilisateur :",
+          endpointData.url,
+        );
+        console.log("-------------------------------------------");
       } else {
-          console.warn("AVERTISSEMENT : Impossible de récupérer l'endpoint dynamique. L'objet retourné est invalide.");
+        console.warn(
+          "AVERTISSEMENT : Impossible de récupérer l'endpoint dynamique. L'objet retourné est invalide.",
+        );
       }
     } catch (endpointError) {
-      console.error("ERREUR lors de la tentative de récupération de l'endpoint dynamique :", endpointError);
+      console.error(
+        "ERREUR lors de la tentative de récupération de l'endpoint dynamique :",
+        endpointError,
+      );
     }
 
     triconnectAPI.ui.setMenu({
