@@ -172,6 +172,7 @@ import {
       // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
       console.log("--- Objet triconnectAPI complet pour le débogage ---");
       console.log(triconnectAPI);
+      console.log("L'ID du projet détecté est :", projectInfo.id);
       if (
         window.location.ancestorOrigins &&
         window.location.ancestorOrigins.length > 0
