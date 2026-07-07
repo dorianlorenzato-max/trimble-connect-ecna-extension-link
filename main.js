@@ -172,39 +172,28 @@ import {
       // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
       console.log("--- Objet triconnectAPI complet pour le débogage ---");
       console.log(triconnectAPI);
-      console.log(
-        "Tentative de récupération des informations de l'hôte via triconnectAPI.extension.getHost()...",
-      );
-      if (window.location.ancestorOrigins && window.location.ancestorOrigins.length > 0) {
+      if (
+        window.location.ancestorOrigins &&
+        window.location.ancestorOrigins.length > 0
+      ) {
         const trimbleConnectOrigin = window.location.ancestorOrigins[0];
 
-      const hostData = await triconnectAPI.extension.getHost();
         console.log("--- DÉTECTION DE L'ORIGINE PARENTE RÉUSSIE ---");
-        console.log("L'URL de base de l'application Trimble Connect est :", trimbleConnectOrigin);
-        console.log("-------------------------------------------------");
-
-      if (hostData && hostData.origin) {
-        console.log("--- DÉTECTION DE L'HÔTE RÉUSSIE ---");
-        console.log("Données de l'hôte reçues :", hostData);
         console.log(
-          "L'URL d'origine de l'application Trimble Connect est :",
-          hostData.origin,
+          "L'URL de base de l'application Trimble Connect est :",
+          trimbleConnectOrigin,
         );
-        console.log("------------------------------------");
+        console.log("-------------------------------------------------");
       } else {
         console.warn(
-          "AVERTISSEMENT : triconnectAPI.extension.getHost() n'a pas retourné l'objet attendu.",
-          hostData,
+          "AVERTISSEMENT : Impossible de trouver 'window.location.ancestorOrigins'. L'environnement de l'extension ne le permet peut-être pas.",
         );
-        console.warn("AVERTISSEMENT : Impossible de trouver 'window.location.ancestorOrigins'. L'environnement de l'extension ne le permet peut-être pas.");
       }
-    } catch (hostError) {
-      console.error(
-        "ERREUR lors de l'appel à triconnectAPI.extension.getHost() :",
-        hostError,
-      );
     } catch (originError) {
-      console.error("ERREUR lors de la tentative de récupération de l'origine parente :", originError);
+      console.error(
+        "ERREUR lors de la tentative de récupération de l'origine parente :",
+        originError,
+      );
     }
 
     triconnectAPI.ui.setMenu({
