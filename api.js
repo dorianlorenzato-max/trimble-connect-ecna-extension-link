@@ -7,16 +7,73 @@ const LINKS_CONFIG_FILENAME = "links-config.json";
 
 // Récupère le rôle de l'utilisateur pour le projet actuel.
 
-async function fetchUserProjectRole(projectId, accessToken) {
-  const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/${projectId}/users/me`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    throw new Error("Impossible de récupérer le rôle de l'utilisateur.");
+async function fetchUserProjectRole(currentProjectId, accessToken) {
+  console.log("--- Début de la nouvelle méthode pour fetchUserProjectRole ---");
+  console.log("ID du projet actuel à rechercher :", currentProjectId);
+
+  // On utilise le nouvel endpoint /projects/me
+  const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/me`;
+  console.log("Appel de l'endpoint général :", url);
+
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    console.log(
+      "Réponse reçue du serveur. Statut :",
+      response.status,
+      response.statusText,
+    );
+
+    if (!response.ok) {
+      // Si l'appel échoue, on essaie de lire le corps de l'erreur pour plus de détails
+      const errorBody = await response.text();
+      console.error(
+        "Échec de l'appel à /projects/me. Corps de l'erreur :",
+        errorBody,
+      );
+      throw new Error(
+        `Échec de la récupération de la liste des projets. Statut: ${response.status}`,
+      );
+    }
+
+    const allUserProjects = await response.json();
+    console.log(
+      `Données reçues. L'utilisateur a accès à ${allUserProjects.length} projet(s).`,
+    );
+
+    // On cherche le projet actuel dans la liste complète
+    const currentProjectDetails = allUserProjects.find(
+      (project) => project.id === currentProjectId,
+    );
+
+    if (currentProjectDetails) {
+      console.log(
+        "Projet correspondant trouvé dans la liste :",
+        currentProjectDetails,
+      );
+      const userRole = currentProjectDetails.role;
+      console.log("Rôle de l'utilisateur pour ce projet :", userRole);
+      console.log("--- Fin de la méthode (SUCCÈS) ---");
+      return userRole;
+    } else {
+      console.error(
+        "ERREUR CRITIQUE : Le projet actuel n'a pas été trouvé dans la liste des projets retournée par /projects/me. L'utilisateur n'a peut-être pas les permissions de base sur ce projet.",
+      );
+      throw new Error(
+        "Projet actuel non trouvé dans la liste de l'utilisateur.",
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Une erreur est survenue durant la nouvelle méthode fetchUserProjectRole :",
+      error,
+    );
+    console.log("--- Fin de la méthode (ÉCHEC) ---");
+    // On propage l'erreur pour que le bloc catch de main.js puisse l'afficher
+    throw error;
   }
-  const userDetails = await response.json();
-  return userDetails.role;
 }
 
 /**
