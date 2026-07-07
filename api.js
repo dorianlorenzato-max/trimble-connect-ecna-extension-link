@@ -11,7 +11,6 @@ async function fetchUserProjectRole(projectId, accessToken) {
   const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/${projectId}/users/me`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
-    credentials: "include",
   });
   if (!response.ok) {
     throw new Error("Impossible de récupérer le rôle de l'utilisateur.");
