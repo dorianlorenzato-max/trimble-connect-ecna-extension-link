@@ -21,74 +21,6 @@ import {
     links: [],
   };
 
-  // --- INITIALISATION ---
-
-  try {
-    triconnectAPI = await TrimbleConnectWorkspace.connect(
-      window.parent,
-      () => console.log("Session expirée"),
-      30000,
-    );
-    globalAccessToken =
-      await triconnectAPI.extension.requestPermission("accesstoken");
-    const projectInfo = await triconnectAPI.project.getCurrentProject();
-    currentProjectId = projectInfo.id;
-
-    triconnectAPI.ui.setMenu({
-      title: "ECNA Liens URLs",
-      icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
-      command: "open_extension",
-    });
-
-    console.log(
-      "Jeton d'accès obtenu. Introduction d'un délai de 200ms pour assurer l'initialisation complète.",
-    );
-    setTimeout(() => {
-      console.log("Délai terminé. Démarrage du chargement des données.");
-      loadInitialDataAndRender();
-    }, 2000); // Délai de 2000 millisecondes
-
-    configBtn.addEventListener("click", () => {
-      appState.isConfigModeActive = !appState.isConfigModeActive;
-      if (!appState.isConfigModeActive) appState.editMode = "view";
-      rerenderUI();
-    });
-
-    async function loadInitialDataAndRender() {
-      try {
-        mainContentDiv.innerHTML = "<p>Chargement...</p>";
-        const userRole = await fetchUserProjectRole(
-          currentProjectId,
-          globalAccessToken,
-        );
-        if (userRole === "ADMIN") configBtn.style.display = "block";
-
-        const projectRootId = await getProjectRootId(
-          triconnectAPI,
-          globalAccessToken,
-        );
-        configFolderId = await findOrCreateFolder(
-          projectRootId,
-          "Configuration_Links",
-          globalAccessToken,
-        );
-        appState.links = await fetchLinksConfiguration(
-          globalAccessToken,
-          configFolderId,
-        );
-
-        rerenderUI();
-      } catch (error) {
-        console.error("Erreur lors du chargement des données :", error);
-        mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
-      }
-    }
-
-    loadInitialDataAndRender();
-  } catch (error) {
-    console.error("Erreur critique au démarrage :", error);
-    mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
-  }
   // --- FONCTIONS DE Rendu et de Gestion des Événements ---
 
   // La fonction `rerenderUI` se contente d'appeler les deux autres.
@@ -221,5 +153,68 @@ import {
       appState.editMode = "view";
       await saveAndRerender();
     }
+  }
+
+  // --- INITIALISATION ---
+
+  try {
+    triconnectAPI = await TrimbleConnectWorkspace.connect(
+      window.parent,
+      () => console.log("Session expirée"),
+      30000,
+    );
+    globalAccessToken =
+      await triconnectAPI.extension.requestPermission("accesstoken");
+    const projectInfo = await triconnectAPI.project.getCurrentProject();
+    currentProjectId = projectInfo.id;
+
+    triconnectAPI.ui.setMenu({
+      title: "ECNA Liens URLs",
+      icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
+      command: "open_extension",
+    });
+
+    loadInitialDataAndRender();
+
+    configBtn.addEventListener("click", () => {
+      appState.isConfigModeActive = !appState.isConfigModeActive;
+      if (!appState.isConfigModeActive) appState.editMode = "view";
+      rerenderUI();
+    });
+
+    async function loadInitialDataAndRender() {
+      try {
+        mainContentDiv.innerHTML = "<p>Chargement...</p>";
+        const userRole = await fetchUserProjectRole(
+          currentProjectId,
+          globalAccessToken,
+        );
+        if (userRole === "ADMIN") configBtn.style.display = "block";
+
+        const projectRootId = await getProjectRootId(
+          triconnectAPI,
+          globalAccessToken,
+        );
+        configFolderId = await findOrCreateFolder(
+          projectRootId,
+          "Configuration_Links",
+          globalAccessToken,
+        );
+        appState.links = await fetchLinksConfiguration(
+          globalAccessToken,
+          configFolderId,
+        );
+
+        rerenderUI();
+      } catch (error) {
+        console.error("Erreur lors du chargement des données :", error);
+        mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
+      }
+    }
+
+    loadInitialDataAndRender();
+  } catch (error) {
+    console.error("Erreur critique au démarrage :", error);
+    mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
   }
 })();
