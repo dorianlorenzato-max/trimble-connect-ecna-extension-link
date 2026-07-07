@@ -13,11 +13,7 @@ import {
   const mainContentDiv = document.getElementById("mainContent");
   const configBtn = document.getElementById("config-btn");
 
-  let triconnectAPI,
-    globalAccessToken,
-    currentProjectId,
-    configFolderId,
-    apiBaseUrl;
+  let triconnectAPI, globalAccessToken, currentProjectId, configFolderId;
 
   let appState = {
     isConfigModeActive: false,
@@ -25,12 +21,18 @@ import {
     links: [],
   };
 
+  // --- FONCTIONS DE Rendu et de Gestion des Événements ---
+
+  // La fonction `rerenderUI` se contente d'appeler les deux autres.
   function rerenderUI() {
     renderHomePage(mainContentDiv, appState.links, appState);
-    attachEventListeners();
+    attachEventListeners(); // On attache les écouteurs APRÈS avoir dessiné l'interface.
   }
 
+  //  On revient à une fonction qui attache les écouteurs aux éléments existants.
   function attachEventListeners() {
+    console.log("Appel de attachEventListeners...");
+    // 1. Gérer les boutons de configuration
     if (appState.isConfigModeActive) {
       document
         .getElementById("add-link-btn")
@@ -48,6 +50,7 @@ import {
         });
     }
 
+    // 2. Gérer le bouton "Terminer"
     const finishBtn = document.getElementById("finish-editing-btn");
     if (finishBtn) {
       finishBtn.addEventListener("click", () => {
@@ -56,27 +59,59 @@ import {
       });
     }
 
-    document.querySelectorAll(".link-button").forEach((button) => {
+    // 3. Gérer les clics sur chaque "bouton lien" individuellement
+    const linkButtons = document.querySelectorAll(".link-button");
+    console.log(`${linkButtons.length} "boutons liens" trouvés.`);
+    linkButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        const index = parseInt(button.dataset.index, 10);
-        const link = appState.links[index];
-        if (!link) return;
+        console.log("--- Clic sur un bouton lien détecté ---");
+        console.log("Mode d'édition actuel :", appState.editMode);
 
+        const index = parseInt(button.dataset.index, 10);
+        console.log("Index du bouton :", index);
+
+        const link = appState.links[index];
+        console.log("Lien correspondant dans l'état :", link);
+
+        if (!link) {
+          console.error(
+            "ERREUR : Impossible de trouver le lien correspondant à cet index. L'état de l'application est peut-être désynchronisé.",
+          );
+          return;
+        }
+
+        // Pour cette étape, on ne gère que le mode 'view'.
         if (appState.editMode === "view") {
+          console.log(
+            "Mode 'view' actif. Tentative d'ouverture de l'URL :",
+            link.url,
+          );
           window.open(link.url, "_blank");
         } else if (appState.editMode === "delete") {
+          //  Log pour tracer l'appel
+          console.log(
+            `Mode 'delete' détecté. Appel de handleDeleteLink pour l'index ${index}...`,
+          );
           handleDeleteLink(index);
         } else if (appState.editMode === "edit") {
+          console.log(
+            `Mode 'edit' détecté. Appel de handleEditLink pour l'index ${index}...`,
+          );
           handleEditLink(index);
+        } else {
+          console.log(
+            `Clic ignoré car le mode est '${appState.editMode}', pas 'view'.`,
+          );
         }
       });
     });
   }
 
+  // --- LOGIQUE MÉTIER (Ajouter, Modifier, Supprimer) ---
+
   async function saveAndRerender() {
     try {
       await saveLinksConfiguration(
-        apiBaseUrl,
         globalAccessToken,
         configFolderId,
         appState.links,
@@ -84,7 +119,7 @@ import {
     } catch (error) {
       console.error("Échec de la sauvegarde :", error);
       alert("Erreur : Impossible de sauvegarder la configuration.");
-      return loadInitialDataAndRender();
+      return loadInitialDataAndRender(); // En cas d'erreur, on recharge tout.
     }
     rerenderUI();
   }
@@ -120,54 +155,8 @@ import {
     }
   }
 
-  /**
-   * Détecte dynamiquement l'URL du serveur API correct en se basant sur la localisation du projet.
-   * C'est la méthode la plus robuste.
-   */
-  async function getApiBaseUrlForProject(projectInfo) {
-    try {
-      console.log(
-        "Informations du projet reçues pour la détection du serveur :",
-        projectInfo,
-      );
-      if (!projectInfo.location) {
-        throw new Error(
-          "La propriété 'location' est manquante dans les informations du projet.",
-        );
-      }
-
-      const projectLocation = projectInfo.location; // Ex: "europe" ou "northAmerica"
-
-      // On appelle l'API publique /regions sur un serveur de référence
-      const regions = await (
-        await fetch("https://app.connect.trimble.com/tc/api/2.0/regions")
-      ).json();
-
-      // On cherche la région qui correspond à la localisation du projet
-      const currentRegion = regions.find(
-        (region) =>
-          region.location.toLowerCase() === projectLocation.toLowerCase(),
-      );
-
-      if (currentRegion && currentRegion["tc-api"]) {
-        // On retourne l'URL de l'API de cette région
-        return currentRegion["tc-api"].replace(/\/$/, ""); // Enlève le / à la fin
-      } else {
-        throw new Error(
-          `Aucun serveur API trouvé pour la localisation du projet : '${projectLocation}'`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Échec de la détection dynamique du serveur API, utilisation d'une URL par défaut.",
-        error,
-      );
-      // En cas d'échec total, on se rabat sur l'ancienne méthode (moins fiable)
-      return "https://app21.connect.trimble.com";
-    }
-  }
-
   // --- INITIALISATION ---
+
   try {
     triconnectAPI = await TrimbleConnectWorkspace.connect(
       window.parent,
@@ -178,14 +167,6 @@ import {
       await triconnectAPI.extension.requestPermission("accesstoken");
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
-
-    // ----- DÉTECTION FINALE DE L'URL -----
-    apiBaseUrl = await getApiBaseUrlForProject(projectInfo);
-    console.log(
-      "URL de l'API DÉFINITIVE (basée sur la localisation du projet) :",
-      apiBaseUrl,
-    );
-    // ------------------------------------
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
@@ -202,29 +183,47 @@ import {
     });
 
     async function loadInitialDataAndRender() {
+      // Ce try...catch principal ne gère plus que les erreurs CRITIQUES (échec du chargement des liens)
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
 
-        const userRole = await fetchUserProjectRole(
-          apiBaseUrl,
-          currentProjectId,
-          globalAccessToken,
+        // --- Bloc pour la vérification du rôle, qui est maintenant NON-BLOQUANT ---
+        console.log(
+          "Tentative de récupération du rôle de l'utilisateur (non-bloquant)...",
         );
-        if (userRole === "ADMIN") configBtn.style.display = "block";
+        try {
+          const userRole = await fetchUserProjectRole(
+            currentProjectId,
+            globalAccessToken,
+          );
+          if (userRole === "ADMIN") {
+            console.log(
+              "Utilisateur est ADMIN, affichage du bouton de configuration.",
+            );
+            configBtn.style.display = "block";
+          } else {
+            console.log(
+              "Utilisateur n'est pas ADMIN, le bouton de configuration reste masqué.",
+            );
+          }
+        } catch (roleError) {
+          // En cas d'erreur, on affiche un avertissement mais on ne bloque PAS l'application.
+          console.warn(
+            `AVERTISSEMENT : Impossible de vérifier le rôle de l'utilisateur. Le bouton de configuration sera masqué par défaut. Message : ${roleError.message}`,
+          );
+          configBtn.style.display = "none"; // Sécurité : on s'assure que le bouton est masqué.
+        }
 
         const projectRootId = await getProjectRootId(
-          apiBaseUrl,
           triconnectAPI,
           globalAccessToken,
         );
         configFolderId = await findOrCreateFolder(
-          apiBaseUrl,
           projectRootId,
           "Configuration_Links",
           globalAccessToken,
         );
         appState.links = await fetchLinksConfiguration(
-          apiBaseUrl,
           globalAccessToken,
           configFolderId,
         );
@@ -235,6 +234,8 @@ import {
         mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
       }
     }
+
+    loadInitialDataAndRender();
   } catch (error) {
     console.error("Erreur critique au démarrage :", error);
     mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
