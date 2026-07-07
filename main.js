@@ -21,6 +21,68 @@ import {
     links: [],
   };
 
+  // --- INITIALISATION ---
+
+  try {
+    triconnectAPI = await TrimbleConnectWorkspace.connect(
+      window.parent,
+      () => console.log("Session expirée"),
+      30000,
+    );
+    globalAccessToken =
+      await triconnectAPI.extension.requestPermission("accesstoken");
+    const projectInfo = await triconnectAPI.project.getCurrentProject();
+    currentProjectId = projectInfo.id;
+
+    triconnectAPI.ui.setMenu({
+      title: "ECNA Liens URLs",
+      icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
+      command: "open_extension",
+    });
+
+    loadInitialDataAndRender();
+
+    configBtn.addEventListener("click", () => {
+      appState.isConfigModeActive = !appState.isConfigModeActive;
+      if (!appState.isConfigModeActive) appState.editMode = "view";
+      rerenderUI();
+    });
+
+    async function loadInitialDataAndRender() {
+      try {
+        mainContentDiv.innerHTML = "<p>Chargement...</p>";
+        const userRole = await fetchUserProjectRole(
+          currentProjectId,
+          globalAccessToken,
+        );
+        if (userRole === "ADMIN") configBtn.style.display = "block";
+
+        const projectRootId = await getProjectRootId(
+          triconnectAPI,
+          globalAccessToken,
+        );
+        configFolderId = await findOrCreateFolder(
+          projectRootId,
+          "Configuration_Links",
+          globalAccessToken,
+        );
+        appState.links = await fetchLinksConfiguration(
+          globalAccessToken,
+          configFolderId,
+        );
+
+        rerenderUI();
+      } catch (error) {
+        console.error("Erreur lors du chargement des données :", error);
+        mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
+      }
+    }
+
+    loadInitialDataAndRender();
+  } catch (error) {
+    console.error("Erreur critique au démarrage :", error);
+    mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
+  }
   // --- FONCTIONS DE Rendu et de Gestion des Événements ---
 
   // La fonction `rerenderUI` se contente d'appeler les deux autres.
@@ -155,67 +217,5 @@ import {
     }
   }
 
-  // --- INITIALISATION ---
-
-  try {
-    triconnectAPI = await TrimbleConnectWorkspace.connect(
-      window.parent,
-      () => console.log("Session expirée"),
-      30000,
-    );
-    globalAccessToken =
-      "eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lkLnRyaW1ibGUuY29tIiwiZXhwIjoxNzgzNDMzOTgyLCJuYmYiOjE3ODM0MzAzODIsImlhdCI6MTc4MzQzMDM4MiwianRpIjoiZWQwNTBkMGVjNjA0NDBiYzllYzA2NmUwMTlhNDk0NjEiLCJqd3RfdmVyIjoyLCJzdWIiOiI1NDQ5NjRmZS0zZjVjLTQ5YTQtYWM4Yy05YTMzYzkyNDEwMzQiLCJpZGVudGl0eV90eXBlIjoidXNlciIsImFtciI6WyJwYXNzd29yZCIsIm1mYSIsInNvZnR3YXJlX3Rva2VuX21mYSJdLCJhdXRoX3RpbWUiOjE3ODMwODE0MzcsImF6cCI6ImU2NDI0ZWJmLTU1YTctNDBkNi04Mjg0LWExYzFkNWY0MmRlMCIsImFjY291bnRfaWQiOiJjNTQ5YWFmNS0yZGI1LTVmYWQtYmZlYy01ODQyMTBkZTI4NDMiLCJhdWQiOlsiZTY0MjRlYmYtNTVhNy00MGQ2LTgyODQtYTFjMWQ1ZjQyZGUwIiwiYzU1MjcxZGQtMmM1MC00NTQ2LWI5NDYtYmZlODFmYTEyMWM5IiwiMWM1Y2Y1NGItOTI4YS00ZDc4LWE5ZjQtZmQ0NGE3Y2I4ZGRjIiwiNmJlNTU0NTItZGM1My00ZWJjLTliMTQtYzE5ZmQ5NmIzOWQ3IiwiNzNiYmRiNjItZGFkMy00ZDg3LWFiMjMtMmFhOWExMzA0NjM1Il0sInNjb3BlIjoiVENXRUJOZXh0Z2VuIGFnZW50cyBtb2RlbHMga2IgaWFtIiwiZGF0YV9yZWdpb24iOiJldSIsInN1Yl90cm4iOiJ0cm46MjppYW06ZXU6dXNlcjo1NDQ5NjRmZS0zZjVjLTQ5YTQtYWM4Yy05YTMzYzkyNDEwMzQiLCJhenBfdHJuIjoidHJuOjI6aWFtOnVzOmFwcGxpY2F0aW9uOmU2NDI0ZWJmLTU1YTctNDBkNi04Mjg0LWExYzFkNWY0MmRlMCJ9.tFvmBW2fFlaVpdhfk8uux-KQBOF2Kj0xct7vdqsACbXXHPuAFiXVjpWcqQruWd_CEK_oeY7MB9Wg028veLJZKDvbFf7m8MXa0ss4iYv9amzEpNfeTVtBpVwrwHQXTS7_VFq0MW3zIOy97iaDXbf908yGtZ1CkdzZsUlPx2VNzTtTuOOTkHRokb-VQKfR2RJitPYOkkuqwuzA7gLMeE-bIy6veozHyJ8MiRzcCKdp7G-f73IebqMu_c4zfqwHHH3ulc3DpnVtwkhklCFMdKCUe5bfky6ZbOD01jXQYf9XJ2rshb7u2AZm2swPr-sqZ5fGHbFGbDoaKwitcuQMmGt6AQ";
-    //await triconnectAPI.extension.requestPermission("accesstoken");
-    const projectInfo = await triconnectAPI.project.getCurrentProject();
-    currentProjectId = projectInfo.id;
-
-    triconnectAPI.ui.setMenu({
-      title: "ECNA Liens URLs",
-      icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
-      command: "open_extension",
-    });
-
-    loadInitialDataAndRender();
-
-    configBtn.addEventListener("click", () => {
-      appState.isConfigModeActive = !appState.isConfigModeActive;
-      if (!appState.isConfigModeActive) appState.editMode = "view";
-      rerenderUI();
-    });
-
-    async function loadInitialDataAndRender() {
-      try {
-        mainContentDiv.innerHTML = "<p>Chargement...</p>";
-        const userRole = await fetchUserProjectRole(
-          currentProjectId,
-          globalAccessToken,
-        );
-        if (userRole === "ADMIN") configBtn.style.display = "block";
-
-        const projectRootId = await getProjectRootId(
-          triconnectAPI,
-          globalAccessToken,
-        );
-        configFolderId = await findOrCreateFolder(
-          projectRootId,
-          "Configuration_Links",
-          globalAccessToken,
-        );
-        appState.links = await fetchLinksConfiguration(
-          globalAccessToken,
-          configFolderId,
-        );
-
-        rerenderUI();
-      } catch (error) {
-        console.error("Erreur lors du chargement des données :", error);
-        mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
-      }
-    }
-
-    loadInitialDataAndRender();
-  } catch (error) {
-    console.error("Erreur critique au démarrage :", error);
-    mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
-  }
+  
 })();
