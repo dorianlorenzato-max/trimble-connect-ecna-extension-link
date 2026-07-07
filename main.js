@@ -120,6 +120,53 @@ import {
     }
   }
 
+  /**
+   * Détecte dynamiquement l'URL du serveur API correct en se basant sur la localisation du projet.
+   * C'est la méthode la plus robuste.
+   */
+  async function getApiBaseUrlForProject(projectInfo) {
+    try {
+      console.log(
+        "Informations du projet reçues pour la détection du serveur :",
+        projectInfo,
+      );
+      if (!projectInfo.location) {
+        throw new Error(
+          "La propriété 'location' est manquante dans les informations du projet.",
+        );
+      }
+
+      const projectLocation = projectInfo.location; // Ex: "europe" ou "northAmerica"
+
+      // On appelle l'API publique /regions sur un serveur de référence
+      const regions = await (
+        await fetch("https://app.connect.trimble.com/tc/api/2.0/regions")
+      ).json();
+
+      // On cherche la région qui correspond à la localisation du projet
+      const currentRegion = regions.find(
+        (region) =>
+          region.location.toLowerCase() === projectLocation.toLowerCase(),
+      );
+
+      if (currentRegion && currentRegion["tc-api"]) {
+        // On retourne l'URL de l'API de cette région
+        return currentRegion["tc-api"].replace(/\/$/, ""); // Enlève le / à la fin
+      } else {
+        throw new Error(
+          `Aucun serveur API trouvé pour la localisation du projet : '${projectLocation}'`,
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Échec de la détection dynamique du serveur API, utilisation d'une URL par défaut.",
+        error,
+      );
+      // En cas d'échec total, on se rabat sur l'ancienne méthode (moins fiable)
+      return "https://app21.connect.trimble.com";
+    }
+  }
+
   // --- INITIALISATION ---
   try {
     triconnectAPI = await TrimbleConnectWorkspace.connect(
@@ -129,17 +176,16 @@ import {
     );
     globalAccessToken =
       await triconnectAPI.extension.requestPermission("accesstoken");
-    currentProjectId = (await triconnectAPI.project.getCurrentProject()).id;
+    const projectInfo = await triconnectAPI.project.getCurrentProject();
+    currentProjectId = projectInfo.id;
 
-    // ----- DÉTECTION ET CONSTRUCTION DE L'URL DYNAMIQUE -----
-    const parentOrigin = window.location.ancestorOrigins[0];
-    const apiHostname = new URL(parentOrigin).hostname.replace(
-      /^web\./,
-      "app.",
+    // ----- DÉTECTION FINALE DE L'URL -----
+    apiBaseUrl = await getApiBaseUrlForProject(projectInfo);
+    console.log(
+      "URL de l'API DÉFINITIVE (basée sur la localisation du projet) :",
+      apiBaseUrl,
     );
-    apiBaseUrl = `https://${apiHostname}`;
-    console.log("URL de base de l'API détectée et utilisée :", apiBaseUrl);
-    // --------------------------------------------------------
+    // ------------------------------------
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
