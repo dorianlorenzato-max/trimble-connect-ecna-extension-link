@@ -231,7 +231,7 @@ import {
         "L'URL du serveur API à utiliser pour cet utilisateur est :",
         dynamicApiUrl,
       );
-      console.log("-----------------------------------------");
+      console.log("-----------------------------------------test");
     } else {
       console.error(
         "ÉCHEC : Impossible de déterminer l'URL de l'API dynamique.",
