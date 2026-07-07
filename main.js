@@ -220,7 +220,7 @@ import {
         configFolderId = await findOrCreateFolder(
           apiBaseUrl,
           projectRootId,
-          CONFIG_FOLDER_NAME,
+          "Configuration_Links",
           globalAccessToken,
         );
         appState.links = await fetchLinksConfiguration(
