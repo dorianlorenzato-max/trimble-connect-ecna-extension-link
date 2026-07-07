@@ -14,7 +14,7 @@ const LINKS_CONFIG_FILENAME = "links-config.json";
  * @returns {Promise<string>} Le rôle de l'utilisateur ('ADMIN' ou 'USER').
  */
 async function fetchUserProjectRole(apiBaseUrl, projectId, accessToken) {
-  const url = `${apiBaseUrl}/tc/api/2.0/projects/${projectId}/users/me`;
+  const url = `${apiBaseUrl}/projects/${projectId}/users/me`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -34,7 +34,7 @@ async function fetchUserProjectRole(apiBaseUrl, projectId, accessToken) {
  */
 async function getProjectRootId(apiBaseUrl, triconnectAPI, accessToken) {
   const projectInfo = await triconnectAPI.project.getCurrentProject();
-  const url = `${apiBaseUrl}/tc/api/2.0/projects/${projectInfo.id}`;
+  const url = `${apiBaseUrl}/projects/${projectInfo.id}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -62,7 +62,7 @@ async function findOrCreateFolder(
   folderName,
   accessToken,
 ) {
-  const itemsUrl = `${apiBaseUrl}/tc/api/2.0/folders/${parentFolderId}/items`;
+  const itemsUrl = `${apiBaseUrl}/folders/${parentFolderId}/items`;
   const response = await fetch(itemsUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -80,7 +80,7 @@ async function findOrCreateFolder(
     return existingFolder.id;
   }
 
-  const createUrl = `${apiBaseUrl}/tc/api/2.0/folders`;
+  const createUrl = `${apiBaseUrl}/folders`;
   const createResponse = await fetch(createUrl, {
     method: "POST",
     headers: {
@@ -109,7 +109,7 @@ async function fetchLinksConfiguration(
   accessToken,
   configFolderId,
 ) {
-  const url = `${apiBaseUrl}/tc/api/2.0/folders/${configFolderId}/items`;
+  const url = `${apiBaseUrl}/folders/${configFolderId}/items`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -126,7 +126,7 @@ async function fetchLinksConfiguration(
   }
 
   const downloadUrlResponse = await fetch(
-    `${apiBaseUrl}/tc/api/2.0/files/fs/${configFile.id}/downloadurl`,
+    `${apiBaseUrl}/files/fs/${configFile.id}/downloadurl`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
     },
@@ -154,7 +154,7 @@ async function saveLinksConfiguration(
   const jsonString = JSON.stringify(linksData, null, 2);
   const fileBlob = new Blob([jsonString], { type: "application/json" });
 
-  const initiateUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
+  const initiateUrl = `${apiBaseUrl}/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
   const initiateResponse = await fetch(initiateUrl, {
     method: "POST",
     headers: {
@@ -177,7 +177,7 @@ async function saveLinksConfiguration(
   });
   if (!uploadResponse.ok) throw new Error("L'upload du fichier a échoué.");
 
-  const verifyUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?uploadId=${uploadId}&wait=true`;
+  const verifyUrl = `${apiBaseUrl}/files/fs/upload?uploadId=${uploadId}&wait=true`;
   const verifyResponse = await fetch(verifyUrl, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
