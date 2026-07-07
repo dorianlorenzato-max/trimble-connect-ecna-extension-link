@@ -1,13 +1,18 @@
 /**
  * Module pour la communication avec les APIs Trimble Connect.
+ * Les URLs sont construites dynamiquement à partir d'une URL de base.
  */
 
 const CONFIG_FOLDER_NAME = "Configuration_Links";
 const LINKS_CONFIG_FILENAME = "links-config.json";
 
-// Récupère le rôle de l'utilisateur pour le projet actuel.
-
-// Chaque fonction doit accepter 'apiBaseUrl' comme premier paramètre.
+/**
+ * Récupère le rôle de l'utilisateur pour le projet actuel.
+ * @param {string} apiBaseUrl - L'URL de base de l'API REST de la région.
+ * @param {string} projectId - L'ID du projet.
+ * @param {string} accessToken - Le jeton d'accès.
+ * @returns {Promise<string>} Le rôle de l'utilisateur ('ADMIN' ou 'USER').
+ */
 async function fetchUserProjectRole(apiBaseUrl, projectId, accessToken) {
   const url = `${apiBaseUrl}/tc/api/2.0/projects/${projectId}/users/me`;
   const response = await fetch(url, {
@@ -16,11 +21,13 @@ async function fetchUserProjectRole(apiBaseUrl, projectId, accessToken) {
   if (!response.ok) {
     throw new Error("Impossible de récupérer le rôle de l'utilisateur.");
   }
-  return (await response.json()).role;
+  const userDetails = await response.json();
+  return userDetails.role;
 }
 
 /**
  * Récupère l'ID du dossier racine du projet.
+ * @param {string} apiBaseUrl - L'URL de base de l'API REST de la région.
  * @param {object} triconnectAPI - L'instance de l'API Trimble Connect.
  * @param {string} accessToken - Le jeton d'accès.
  * @returns {Promise<string>} L'ID du dossier racine.
@@ -40,12 +47,14 @@ async function getProjectRootId(apiBaseUrl, triconnectAPI, accessToken) {
   }
   return fullProjectInfo.rootId;
 }
+
 /**
  * Trouve un dossier par son nom dans un dossier parent, ou le crée s'il n'existe pas.
- * @param {string} parentFolderId - L'ID du dossier parent où chercher/créer.
+ * @param {string} apiBaseUrl - L'URL de base de l'API REST de la région.
+ * @param {string} parentFolderId - L'ID du dossier parent.
  * @param {string} folderName - Le nom du dossier à trouver ou créer.
  * @param {string} accessToken - Le jeton d'accès.
- * @returns {Promise<string>} L'ID du dossier trouvé ou nouvellement créé.
+ * @returns {Promise<string>} L'ID du dossier trouvé ou créé.
  */
 async function findOrCreateFolder(
   apiBaseUrl,
@@ -53,7 +62,6 @@ async function findOrCreateFolder(
   folderName,
   accessToken,
 ) {
-  // 1. Chercher si le dossier existe déjà
   const itemsUrl = `${apiBaseUrl}/tc/api/2.0/folders/${parentFolderId}/items`;
   const response = await fetch(itemsUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -69,12 +77,9 @@ async function findOrCreateFolder(
   );
 
   if (existingFolder) {
-    console.log(`Dossier "${folderName}" trouvé (ID: ${existingFolder.id}).`);
-    return existingFolder.id; // Le dossier existe, on retourne son ID
+    return existingFolder.id;
   }
 
-  // 2. S'il n'existe pas, on le crée
-  console.log(`Dossier "${folderName}" non trouvé. Création en cours...`);
   const createUrl = `${apiBaseUrl}/tc/api/2.0/folders`;
   const createResponse = await fetch(createUrl, {
     method: "POST",
@@ -89,14 +94,12 @@ async function findOrCreateFolder(
     throw new Error(`La création du dossier "${folderName}" a échoué.`);
   }
   const newFolder = await createResponse.json();
-  console.log(
-    `Dossier "${folderName}" créé avec succès (ID: ${newFolder.id}).`,
-  );
   return newFolder.id;
 }
 
 /**
  * Lit le fichier de configuration des liens depuis Trimble Connect.
+ * @param {string} apiBaseUrl - L'URL de base de l'API REST de la région.
  * @param {string} accessToken - Le jeton d'accès.
  * @param {string} configFolderId - L'ID du dossier de configuration.
  * @returns {Promise<Array>} Une liste des liens configurés.
@@ -119,13 +122,9 @@ async function fetchLinksConfiguration(
   const configFile = items.find((item) => item.name === LINKS_CONFIG_FILENAME);
 
   if (!configFile) {
-    console.log(
-      "Le fichier de configuration n'existe pas encore. Retourne une liste vide.",
-    );
-    return []; // Si le fichier n'existe pas, on retourne une liste vide.
+    return [];
   }
 
-  // Si le fichier existe, on le télécharge et on retourne son contenu.
   const downloadUrlResponse = await fetch(
     `${apiBaseUrl}/tc/api/2.0/files/fs/${configFile.id}/downloadurl`,
     {
@@ -134,11 +133,12 @@ async function fetchLinksConfiguration(
   );
   const downloadInfo = await downloadUrlResponse.json();
   const contentResponse = await fetch(downloadInfo.url);
-  const links = await contentResponse.json();
-  return links;
+  return await contentResponse.json();
 }
+
 /**
  * Sauvegarde la configuration des liens dans un fichier JSON sur Trimble Connect.
+ * @param {string} apiBaseUrl - L'URL de base de l'API REST de la région.
  * @param {string} accessToken - Le jeton d'accès.
  * @param {string} configFolderId - L'ID du dossier de configuration.
  * @param {Array} linksData - Le tableau des liens à sauvegarder.
@@ -150,11 +150,10 @@ async function saveLinksConfiguration(
   configFolderId,
   linksData,
 ) {
-  const fileName = "links-config.json";
+  const fileName = LINKS_CONFIG_FILENAME;
   const jsonString = JSON.stringify(linksData, null, 2);
   const fileBlob = new Blob([jsonString], { type: "application/json" });
 
-  // 1. Initier l'upload
   const initiateUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
   const initiateResponse = await fetch(initiateUrl, {
     method: "POST",
@@ -171,7 +170,6 @@ async function saveLinksConfiguration(
   const finalUploadUrl = uploadDetails.contents[0].url;
   const uploadId = uploadDetails.uploadId;
 
-  // 2. Uploader le contenu
   const uploadResponse = await fetch(finalUploadUrl, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -179,7 +177,6 @@ async function saveLinksConfiguration(
   });
   if (!uploadResponse.ok) throw new Error("L'upload du fichier a échoué.");
 
-  // 3. Vérifier l'upload
   const verifyUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?uploadId=${uploadId}&wait=true`;
   const verifyResponse = await fetch(verifyUrl, {
     method: "GET",
