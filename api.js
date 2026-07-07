@@ -7,73 +7,16 @@ const LINKS_CONFIG_FILENAME = "links-config.json";
 
 // Récupère le rôle de l'utilisateur pour le projet actuel.
 
-async function fetchUserProjectRole(currentProjectId, accessToken) {
-  console.log("--- Début de la nouvelle méthode pour fetchUserProjectRole ---");
-  console.log("ID du projet actuel à rechercher :", currentProjectId);
-
-  // On utilise le nouvel endpoint /projects/me
-  const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/me`;
-  console.log("Appel de l'endpoint général :", url);
-
-  try {
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    console.log(
-      "Réponse reçue du serveur. Statut :",
-      response.status,
-      response.statusText,
-    );
-
-    if (!response.ok) {
-      // Si l'appel échoue, on essaie de lire le corps de l'erreur pour plus de détails
-      const errorBody = await response.text();
-      console.error(
-        "Échec de l'appel à /projects/me. Corps de l'erreur :",
-        errorBody,
-      );
-      throw new Error(
-        `Échec de la récupération de la liste des projets. Statut: ${response.status}`,
-      );
-    }
-
-    const allUserProjects = await response.json();
-    console.log(
-      `Données reçues. L'utilisateur a accès à ${allUserProjects.length} projet(s).`,
-    );
-
-    // On cherche le projet actuel dans la liste complète
-    const currentProjectDetails = allUserProjects.find(
-      (project) => project.id === currentProjectId,
-    );
-
-    if (currentProjectDetails) {
-      console.log(
-        "Projet correspondant trouvé dans la liste :",
-        currentProjectDetails,
-      );
-      const userRole = currentProjectDetails.role;
-      console.log("Rôle de l'utilisateur pour ce projet :", userRole);
-      console.log("--- Fin de la méthode (SUCCÈS) ---");
-      return userRole;
-    } else {
-      console.error(
-        "ERREUR CRITIQUE : Le projet actuel n'a pas été trouvé dans la liste des projets retournée par /projects/me. L'utilisateur n'a peut-être pas les permissions de base sur ce projet.",
-      );
-      throw new Error(
-        "Projet actuel non trouvé dans la liste de l'utilisateur.",
-      );
-    }
-  } catch (error) {
-    console.error(
-      "Une erreur est survenue durant la nouvelle méthode fetchUserProjectRole :",
-      error,
-    );
-    console.log("--- Fin de la méthode (ÉCHEC) ---");
-    // On propage l'erreur pour que le bloc catch de main.js puisse l'afficher
-    throw error;
+// Chaque fonction doit accepter 'apiBaseUrl' comme premier paramètre.
+async function fetchUserProjectRole(apiBaseUrl, projectId, accessToken) {
+  const url = `${apiBaseUrl}/tc/api/2.0/projects/${projectId}/users/me`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error("Impossible de récupérer le rôle de l'utilisateur.");
   }
+  return (await response.json()).role;
 }
 
 /**
@@ -82,9 +25,9 @@ async function fetchUserProjectRole(currentProjectId, accessToken) {
  * @param {string} accessToken - Le jeton d'accès.
  * @returns {Promise<string>} L'ID du dossier racine.
  */
-async function getProjectRootId(triconnectAPI, accessToken) {
+async function getProjectRootId(apiBaseUrl, triconnectAPI, accessToken) {
   const projectInfo = await triconnectAPI.project.getCurrentProject();
-  const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/${projectInfo.id}`;
+  const url = `${apiBaseUrl}/tc/api/2.0/projects/${projectInfo.id}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -104,9 +47,14 @@ async function getProjectRootId(triconnectAPI, accessToken) {
  * @param {string} accessToken - Le jeton d'accès.
  * @returns {Promise<string>} L'ID du dossier trouvé ou nouvellement créé.
  */
-async function findOrCreateFolder(parentFolderId, folderName, accessToken) {
+async function findOrCreateFolder(
+  apiBaseUrl,
+  parentFolderId,
+  folderName,
+  accessToken,
+) {
   // 1. Chercher si le dossier existe déjà
-  const itemsUrl = `https://app21.connect.trimble.com/tc/api/2.0/folders/${parentFolderId}/items`;
+  const itemsUrl = `${apiBaseUrl}/tc/api/2.0/folders/${parentFolderId}/items`;
   const response = await fetch(itemsUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -127,7 +75,7 @@ async function findOrCreateFolder(parentFolderId, folderName, accessToken) {
 
   // 2. S'il n'existe pas, on le crée
   console.log(`Dossier "${folderName}" non trouvé. Création en cours...`);
-  const createUrl = `https://app21.connect.trimble.com/tc/api/2.0/folders`;
+  const createUrl = `${apiBaseUrl}/tc/api/2.0/folders`;
   const createResponse = await fetch(createUrl, {
     method: "POST",
     headers: {
@@ -153,8 +101,12 @@ async function findOrCreateFolder(parentFolderId, folderName, accessToken) {
  * @param {string} configFolderId - L'ID du dossier de configuration.
  * @returns {Promise<Array>} Une liste des liens configurés.
  */
-async function fetchLinksConfiguration(accessToken, configFolderId) {
-  const url = `https://app21.connect.trimble.com/tc/api/2.0/folders/${configFolderId}/items`;
+async function fetchLinksConfiguration(
+  apiBaseUrl,
+  accessToken,
+  configFolderId,
+) {
+  const url = `${apiBaseUrl}/tc/api/2.0/folders/${configFolderId}/items`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -175,7 +127,7 @@ async function fetchLinksConfiguration(accessToken, configFolderId) {
 
   // Si le fichier existe, on le télécharge et on retourne son contenu.
   const downloadUrlResponse = await fetch(
-    `https://app21.connect.trimble.com/tc/api/2.0/files/fs/${configFile.id}/downloadurl`,
+    `${apiBaseUrl}/tc/api/2.0/files/fs/${configFile.id}/downloadurl`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
     },
@@ -192,13 +144,18 @@ async function fetchLinksConfiguration(accessToken, configFolderId) {
  * @param {Array} linksData - Le tableau des liens à sauvegarder.
  * @returns {Promise<object>} Les détails du fichier sauvegardé.
  */
-async function saveLinksConfiguration(accessToken, configFolderId, linksData) {
+async function saveLinksConfiguration(
+  apiBaseUrl,
+  accessToken,
+  configFolderId,
+  linksData,
+) {
   const fileName = "links-config.json";
   const jsonString = JSON.stringify(linksData, null, 2);
   const fileBlob = new Blob([jsonString], { type: "application/json" });
 
   // 1. Initier l'upload
-  const initiateUrl = `https://app21.connect.trimble.com/tc/api/2.0/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
+  const initiateUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?parentId=${configFolderId}&parentType=FOLDER`;
   const initiateResponse = await fetch(initiateUrl, {
     method: "POST",
     headers: {
@@ -223,7 +180,7 @@ async function saveLinksConfiguration(accessToken, configFolderId, linksData) {
   if (!uploadResponse.ok) throw new Error("L'upload du fichier a échoué.");
 
   // 3. Vérifier l'upload
-  const verifyUrl = `https://app21.connect.trimble.com/tc/api/2.0/files/fs/upload?uploadId=${uploadId}&wait=true`;
+  const verifyUrl = `${apiBaseUrl}/tc/api/2.0/files/fs/upload?uploadId=${uploadId}&wait=true`;
   const verifyResponse = await fetch(verifyUrl, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
