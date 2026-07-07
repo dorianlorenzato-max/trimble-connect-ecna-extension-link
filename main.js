@@ -164,7 +164,8 @@ import {
       30000,
     );
     globalAccessToken =
-      await triconnectAPI.extension.requestPermission("accesstoken");
+      "eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lkLnRyaW1ibGUuY29tIiwiZXhwIjoxNzgzNDMzOTgyLCJuYmYiOjE3ODM0MzAzODIsImlhdCI6MTc4MzQzMDM4MiwianRpIjoiZWQwNTBkMGVjNjA0NDBiYzllYzA2NmUwMTlhNDk0NjEiLCJqd3RfdmVyIjoyLCJzdWIiOiI1NDQ5NjRmZS0zZjVjLTQ5YTQtYWM4Yy05YTMzYzkyNDEwMzQiLCJpZGVudGl0eV90eXBlIjoidXNlciIsImFtciI6WyJwYXNzd29yZCIsIm1mYSIsInNvZnR3YXJlX3Rva2VuX21mYSJdLCJhdXRoX3RpbWUiOjE3ODMwODE0MzcsImF6cCI6ImU2NDI0ZWJmLTU1YTctNDBkNi04Mjg0LWExYzFkNWY0MmRlMCIsImFjY291bnRfaWQiOiJjNTQ5YWFmNS0yZGI1LTVmYWQtYmZlYy01ODQyMTBkZTI4NDMiLCJhdWQiOlsiZTY0MjRlYmYtNTVhNy00MGQ2LTgyODQtYTFjMWQ1ZjQyZGUwIiwiYzU1MjcxZGQtMmM1MC00NTQ2LWI5NDYtYmZlODFmYTEyMWM5IiwiMWM1Y2Y1NGItOTI4YS00ZDc4LWE5ZjQtZmQ0NGE3Y2I4ZGRjIiwiNmJlNTU0NTItZGM1My00ZWJjLTliMTQtYzE5ZmQ5NmIzOWQ3IiwiNzNiYmRiNjItZGFkMy00ZDg3LWFiMjMtMmFhOWExMzA0NjM1Il0sInNjb3BlIjoiVENXRUJOZXh0Z2VuIGFnZW50cyBtb2RlbHMga2IgaWFtIiwiZGF0YV9yZWdpb24iOiJldSIsInN1Yl90cm4iOiJ0cm46MjppYW06ZXU6dXNlcjo1NDQ5NjRmZS0zZjVjLTQ5YTQtYWM4Yy05YTMzYzkyNDEwMzQiLCJhenBfdHJuIjoidHJuOjI6aWFtOnVzOmFwcGxpY2F0aW9uOmU2NDI0ZWJmLTU1YTctNDBkNi04Mjg0LWExYzFkNWY0MmRlMCJ9.tFvmBW2fFlaVpdhfk8uux-KQBOF2Kj0xct7vdqsACbXXHPuAFiXVjpWcqQruWd_CEK_oeY7MB9Wg028veLJZKDvbFf7m8MXa0ss4iYv9amzEpNfeTVtBpVwrwHQXTS7_VFq0MW3zIOy97iaDXbf908yGtZ1CkdzZsUlPx2VNzTtTuOOTkHRokb-VQKfR2RJitPYOkkuqwuzA7gLMeE-bIy6veozHyJ8MiRzcCKdp7G-f73IebqMu_c4zfqwHHH3ulc3DpnVtwkhklCFMdKCUe5bfky6ZbOD01jXQYf9XJ2rshb7u2AZm2swPr-sqZ5fGHbFGbDoaKwitcuQMmGt6AQ";
+    //await triconnectAPI.extension.requestPermission("accesstoken");
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
@@ -183,36 +184,13 @@ import {
     });
 
     async function loadInitialDataAndRender() {
-      // Ce try...catch principal ne gère plus que les erreurs CRITIQUES (échec du chargement des liens)
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
-
-        // --- Bloc pour la vérification du rôle, qui est maintenant NON-BLOQUANT ---
-        console.log(
-          "Tentative de récupération du rôle de l'utilisateur (non-bloquant)...",
+        const userRole = await fetchUserProjectRole(
+          currentProjectId,
+          globalAccessToken,
         );
-        try {
-          const userRole = await fetchUserProjectRole(
-            currentProjectId,
-            globalAccessToken,
-          );
-          if (userRole === "ADMIN") {
-            console.log(
-              "Utilisateur est ADMIN, affichage du bouton de configuration.",
-            );
-            configBtn.style.display = "block";
-          } else {
-            console.log(
-              "Utilisateur n'est pas ADMIN, le bouton de configuration reste masqué.",
-            );
-          }
-        } catch (roleError) {
-          // En cas d'erreur, on affiche un avertissement mais on ne bloque PAS l'application.
-          console.warn(
-            `AVERTISSEMENT : Impossible de vérifier le rôle de l'utilisateur. Le bouton de configuration sera masqué par défaut. Message : ${roleError.message}`,
-          );
-          configBtn.style.display = "none"; // Sécurité : on s'assure que le bouton est masqué.
-        }
+        if (userRole === "ADMIN") configBtn.style.display = "block";
 
         const projectRootId = await getProjectRootId(
           triconnectAPI,
