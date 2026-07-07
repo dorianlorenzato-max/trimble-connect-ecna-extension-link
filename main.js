@@ -168,6 +168,17 @@ import {
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
+    // --- DÉTECTION ET CONSTRUCTION DE L'URL DYNAMIQUE ---
+    const parentOrigin = window.location.ancestorOrigins[0]; // Ex: "https://web.connect.trimble.com"
+    const apiHostname = new URL(parentOrigin).hostname.replace(
+      /^web\./,
+      "app.",
+    ); // "web.connect..." devient "app.connect..."
+    apiBaseUrl = `https://${apiHostname}`; // L'URL de base correcte !
+
+    console.log("URL de l'API qui sera utilisée :", apiBaseUrl);
+    // ----------------------------------------------------
+
     try {
       // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
       console.log("--- Objet triconnectAPI complet pour le débogage ---");
