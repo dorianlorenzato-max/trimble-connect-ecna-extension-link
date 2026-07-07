@@ -46,7 +46,7 @@ import {
     setTimeout(() => {
       console.log("Délai terminé. Démarrage du chargement des données.");
       loadInitialDataAndRender();
-    }, 200); // Délai de 200 millisecondes
+    }, 2000); // Délai de 2000 millisecondes
 
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
