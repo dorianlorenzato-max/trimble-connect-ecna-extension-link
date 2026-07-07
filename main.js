@@ -13,7 +13,11 @@ import {
   const mainContentDiv = document.getElementById("mainContent");
   const configBtn = document.getElementById("config-btn");
 
-  let triconnectAPI, globalAccessToken, currentProjectId, configFolderId;
+  let triconnectAPI,
+    globalAccessToken,
+    currentProjectId,
+    configFolderId,
+    apiBaseUrl;
 
   let appState = {
     isConfigModeActive: false,
@@ -21,18 +25,12 @@ import {
     links: [],
   };
 
-  // --- FONCTIONS DE Rendu et de Gestion des Événements ---
-
-  // La fonction `rerenderUI` se contente d'appeler les deux autres.
   function rerenderUI() {
     renderHomePage(mainContentDiv, appState.links, appState);
-    attachEventListeners(); // On attache les écouteurs APRÈS avoir dessiné l'interface.
+    attachEventListeners();
   }
 
-  //  On revient à une fonction qui attache les écouteurs aux éléments existants.
   function attachEventListeners() {
-    console.log("Appel de attachEventListeners...");
-    // 1. Gérer les boutons de configuration
     if (appState.isConfigModeActive) {
       document
         .getElementById("add-link-btn")
@@ -50,7 +48,6 @@ import {
         });
     }
 
-    // 2. Gérer le bouton "Terminer"
     const finishBtn = document.getElementById("finish-editing-btn");
     if (finishBtn) {
       finishBtn.addEventListener("click", () => {
@@ -59,59 +56,27 @@ import {
       });
     }
 
-    // 3. Gérer les clics sur chaque "bouton lien" individuellement
-    const linkButtons = document.querySelectorAll(".link-button");
-    console.log(`${linkButtons.length} "boutons liens" trouvés.`);
-    linkButtons.forEach((button) => {
+    document.querySelectorAll(".link-button").forEach((button) => {
       button.addEventListener("click", () => {
-        console.log("--- Clic sur un bouton lien détecté ---");
-        console.log("Mode d'édition actuel :", appState.editMode);
-
         const index = parseInt(button.dataset.index, 10);
-        console.log("Index du bouton :", index);
-
         const link = appState.links[index];
-        console.log("Lien correspondant dans l'état :", link);
+        if (!link) return;
 
-        if (!link) {
-          console.error(
-            "ERREUR : Impossible de trouver le lien correspondant à cet index. L'état de l'application est peut-être désynchronisé.",
-          );
-          return;
-        }
-
-        // Pour cette étape, on ne gère que le mode 'view'.
         if (appState.editMode === "view") {
-          console.log(
-            "Mode 'view' actif. Tentative d'ouverture de l'URL :",
-            link.url,
-          );
           window.open(link.url, "_blank");
         } else if (appState.editMode === "delete") {
-          //  Log pour tracer l'appel
-          console.log(
-            `Mode 'delete' détecté. Appel de handleDeleteLink pour l'index ${index}...`,
-          );
           handleDeleteLink(index);
         } else if (appState.editMode === "edit") {
-          console.log(
-            `Mode 'edit' détecté. Appel de handleEditLink pour l'index ${index}...`,
-          );
           handleEditLink(index);
-        } else {
-          console.log(
-            `Clic ignoré car le mode est '${appState.editMode}', pas 'view'.`,
-          );
         }
       });
     });
   }
 
-  // --- LOGIQUE MÉTIER (Ajouter, Modifier, Supprimer) ---
-
   async function saveAndRerender() {
     try {
       await saveLinksConfiguration(
+        apiBaseUrl,
         globalAccessToken,
         configFolderId,
         appState.links,
@@ -119,7 +84,7 @@ import {
     } catch (error) {
       console.error("Échec de la sauvegarde :", error);
       alert("Erreur : Impossible de sauvegarder la configuration.");
-      return loadInitialDataAndRender(); // En cas d'erreur, on recharge tout.
+      return loadInitialDataAndRender();
     }
     rerenderUI();
   }
@@ -156,7 +121,6 @@ import {
   }
 
   // --- INITIALISATION ---
-
   try {
     triconnectAPI = await TrimbleConnectWorkspace.connect(
       window.parent,
@@ -165,48 +129,17 @@ import {
     );
     globalAccessToken =
       await triconnectAPI.extension.requestPermission("accesstoken");
-    const projectInfo = await triconnectAPI.project.getCurrentProject();
-    currentProjectId = projectInfo.id;
+    currentProjectId = (await triconnectAPI.project.getCurrentProject()).id;
 
-    // --- DÉTECTION ET CONSTRUCTION DE L'URL DYNAMIQUE ---
-    const parentOrigin = window.location.ancestorOrigins[0]; // Ex: "https://web.connect.trimble.com"
+    // ----- DÉTECTION ET CONSTRUCTION DE L'URL DYNAMIQUE -----
+    const parentOrigin = window.location.ancestorOrigins[0];
     const apiHostname = new URL(parentOrigin).hostname.replace(
       /^web\./,
       "app.",
-    ); // "web.connect..." devient "app.connect..."
-    apiBaseUrl = `https://${apiHostname}`; // L'URL de base correcte !
-
-    console.log("URL de l'API qui sera utilisée :", apiBaseUrl);
-    // ----------------------------------------------------
-
-    try {
-      // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
-      console.log("--- Objet triconnectAPI complet pour le débogage ---");
-      console.log(triconnectAPI);
-      console.log("L'ID du projet détecté est :", projectInfo.id);
-      if (
-        window.location.ancestorOrigins &&
-        window.location.ancestorOrigins.length > 0
-      ) {
-        const trimbleConnectOrigin = window.location.ancestorOrigins[0];
-
-        console.log("--- DÉTECTION DE L'ORIGINE PARENTE RÉUSSIE ---");
-        console.log(
-          "L'URL de base de l'application Trimble Connect est :",
-          trimbleConnectOrigin,
-        );
-        console.log("-------------------------------------------------");
-      } else {
-        console.warn(
-          "AVERTISSEMENT : Impossible de trouver 'window.location.ancestorOrigins'. L'environnement de l'extension ne le permet peut-être pas.",
-        );
-      }
-    } catch (originError) {
-      console.error(
-        "ERREUR lors de la tentative de récupération de l'origine parente :",
-        originError,
-      );
-    }
+    );
+    apiBaseUrl = `https://${apiHostname}`;
+    console.log("URL de base de l'API détectée et utilisée :", apiBaseUrl);
+    // --------------------------------------------------------
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
@@ -225,22 +158,27 @@ import {
     async function loadInitialDataAndRender() {
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
+
         const userRole = await fetchUserProjectRole(
+          apiBaseUrl,
           currentProjectId,
           globalAccessToken,
         );
         if (userRole === "ADMIN") configBtn.style.display = "block";
 
         const projectRootId = await getProjectRootId(
+          apiBaseUrl,
           triconnectAPI,
           globalAccessToken,
         );
         configFolderId = await findOrCreateFolder(
+          apiBaseUrl,
           projectRootId,
-          "Configuration_Links",
+          CONFIG_FOLDER_NAME,
           globalAccessToken,
         );
         appState.links = await fetchLinksConfiguration(
+          apiBaseUrl,
           globalAccessToken,
           configFolderId,
         );
@@ -251,8 +189,6 @@ import {
         mainContentDiv.innerHTML = `<p style="color:red;">Erreur lors du chargement des données : ${error.message}</p>`;
       }
     }
-
-    loadInitialDataAndRender();
   } catch (error) {
     console.error("Erreur critique au démarrage :", error);
     mainContentDiv.innerHTML = `<p style="color:red;">Erreur critique au démarrage : ${error.message}</p>`;
