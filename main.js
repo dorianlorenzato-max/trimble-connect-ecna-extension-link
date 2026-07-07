@@ -168,76 +168,44 @@ import {
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
-    // ====================== DÉTECTION DYNAMIQUE DE L'API SERVER ======================
-    /**
-     * Tente de trouver la bonne URL de base de l'API REST en se basant sur l'environnement de l'utilisateur.
-     */
-    async function getDynamicApiBaseUrl() {
-      try {
-        // 1. On récupère l'URL du site parent qui héberge l'extension.
-        const parentOrigin = window.location.ancestorOrigins[0];
-        if (!parentOrigin) {
-          console.error(
-            "Impossible de déterminer l'origine parente (ancestorOrigins).",
-          );
-          return null;
-        }
-        const parentHostname = new URL(parentOrigin).hostname; // Ex: "web.connect.trimble.com"
-
-        // 2. On appelle l'API publique /regions sur un serveur de référence (US master region).
-        const regionsUrl = "https://app.connect.trimble.com/tc/api/2.0/regions";
-        const response = await fetch(regionsUrl);
-        if (!response.ok) {
-          console.error(
-            `Échec de la récupération de la liste des régions depuis ${regionsUrl}`,
-          );
-          return null;
-        }
-        const regions = await response.json();
-
-        // 3. On cherche la bonne région dans la liste.
-        // On doit normaliser les noms : "web.connect.trimble.com" (front-end) correspond à "app.connect.trimble.com" (back-end).
-        const apiHostname = parentHostname.replace(/^web\./, "app."); // Remplace "web." par "app."
-
-        const currentRegion = regions.find((region) => {
-          // L'URL de l'API dans la liste peut être extraite de la propriété 'tc-api'
-          if (region["tc-api"]) {
-            return new URL(region["tc-api"]).hostname === apiHostname;
-          }
-          return false;
-        });
-
-        if (currentRegion && currentRegion["tc-api"]) {
-          // 4. On a trouvé ! On retourne l'URL de l'API pour cette région.
-          return currentRegion["tc-api"];
-        } else {
-          console.warn(
-            `Aucune correspondance trouvée pour l'hôte API '${apiHostname}' dans la liste des régions.`,
-          );
-          return null;
-        }
-      } catch (error) {
-        console.error("Erreur dans la fonction getDynamicApiBaseUrl:", error);
-        return null;
-      }
-    }
-
-    // On exécute la fonction de détection et on affiche le résultat.
-    const dynamicApiUrl = await getDynamicApiBaseUrl();
-
-    if (dynamicApiUrl) {
-      console.log("--- URL DE L'API DYNAMIQUE TROUVÉE ---");
+    try {
+      // Affiche l'objet triconnectAPI entier pour inspection au cas où la suite échoue
+      console.log("--- Objet triconnectAPI complet pour le débogage ---");
+      console.log(triconnectAPI);
       console.log(
-        "L'URL du serveur API à utiliser pour cet utilisateur est :",
-        dynamicApiUrl,
+        "Tentative de récupération des informations de l'hôte via triconnectAPI.extension.getHost()...",
       );
-      console.log("-----------------------------------------test");
-    } else {
+      if (window.location.ancestorOrigins && window.location.ancestorOrigins.length > 0) {
+        const trimbleConnectOrigin = window.location.ancestorOrigins[0];
+
+      const hostData = await triconnectAPI.extension.getHost();
+        console.log("--- DÉTECTION DE L'ORIGINE PARENTE RÉUSSIE ---");
+        console.log("L'URL de base de l'application Trimble Connect est :", trimbleConnectOrigin);
+        console.log("-------------------------------------------------");
+
+      if (hostData && hostData.origin) {
+        console.log("--- DÉTECTION DE L'HÔTE RÉUSSIE ---");
+        console.log("Données de l'hôte reçues :", hostData);
+        console.log(
+          "L'URL d'origine de l'application Trimble Connect est :",
+          hostData.origin,
+        );
+        console.log("------------------------------------");
+      } else {
+        console.warn(
+          "AVERTISSEMENT : triconnectAPI.extension.getHost() n'a pas retourné l'objet attendu.",
+          hostData,
+        );
+        console.warn("AVERTISSEMENT : Impossible de trouver 'window.location.ancestorOrigins'. L'environnement de l'extension ne le permet peut-être pas.");
+      }
+    } catch (hostError) {
       console.error(
-        "ÉCHEC : Impossible de déterminer l'URL de l'API dynamique.",
+        "ERREUR lors de l'appel à triconnectAPI.extension.getHost() :",
+        hostError,
       );
+    } catch (originError) {
+      console.error("ERREUR lors de la tentative de récupération de l'origine parente :", originError);
     }
-    // ==================== FIN DE LA DÉTECTION ====================
 
     triconnectAPI.ui.setMenu({
       title: "ECNA Liens URLs",
