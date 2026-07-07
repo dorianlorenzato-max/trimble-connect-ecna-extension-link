@@ -40,7 +40,13 @@ import {
       command: "open_extension",
     });
 
-    loadInitialDataAndRender();
+    console.log(
+      "Jeton d'accès obtenu. Introduction d'un délai de 200ms pour assurer l'initialisation complète.",
+    );
+    setTimeout(() => {
+      console.log("Délai terminé. Démarrage du chargement des données.");
+      loadInitialDataAndRender();
+    }, 200); // Délai de 200 millisecondes
 
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
@@ -216,6 +222,4 @@ import {
       await saveAndRerender();
     }
   }
-
-  
 })();
