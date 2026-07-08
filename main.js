@@ -163,8 +163,12 @@ import {
       () => console.log("Session expirée"),
       30000,
     );
-    globalAccessToken =
-      await triconnectAPI.extension.requestPermission("accesstoken");
+    console.log("Demande de l'access token avec scopes spécifiques...");
+    globalAccessToken = await triconnectAPI.extension.requestPermission({
+      type: "accesstoken",
+      scopes: ["openid", "projects:read"], // On demande les droits pour lire les projets
+    });
+    console.log("Access Token reçu :", globalAccessToken);
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
