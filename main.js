@@ -160,13 +160,16 @@ import {
   try {
     triconnectAPI = await TrimbleConnectWorkspace.connect(
       window.parent,
-      () => console.log("Session expirée"),
+      () => {}, // On vide le callback pour être identique aux autres
       30000,
     );
-    console.log("Demande de l'access token avec scopes spécifiques...");
+
+    console.log("Demande de l'access token..."); // Gardons le log pour vérifier
     globalAccessToken =
       await triconnectAPI.extension.requestPermission("accesstoken");
-    console.log("Access Token reçu :", globalAccessToken);
+    if (!globalAccessToken) throw new Error("L'Access Token est invalide.");
+    console.warn("Access Token récupéré au démarrage :", globalAccessToken);
+    console.log("Access Token reçu avec succès.");
     const projectInfo = await triconnectAPI.project.getCurrentProject();
     currentProjectId = projectInfo.id;
 
