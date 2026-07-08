@@ -176,8 +176,6 @@ import {
       command: "open_extension",
     });
 
-    loadInitialDataAndRender();
-
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
       if (!appState.isConfigModeActive) appState.editMode = "view";
