@@ -8,11 +8,21 @@ const LINKS_CONFIG_FILENAME = "links-config.json";
 // Récupère le rôle de l'utilisateur pour le projet actuel.
 
 async function fetchUserProjectRole(projectId, accessToken) {
+  console.log("--- Début de la nouvelle méthode fetchUserProjectRole ---");
+  console.log("Access Token utilisé :", accessToken);
   const url = `https://app21.connect.trimble.com/tc/api/2.0/projects/${projectId}/users/me`;
+  console.log("Appel de l'endpoint général :", url); // AJOUT : Affiche l'URL appelée
+
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
+  console.log("Réponse reçue du serveur. Statut :", response.status);
   if (!response.ok) {
+    const errorBody = await response.json();
+    console.error(
+      "Échec de l'appel à /users/me. Corps de l'erreur :",
+      errorBody,
+    );
     throw new Error("Impossible de récupérer le rôle de l'utilisateur.");
   }
   const userDetails = await response.json();
