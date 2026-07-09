@@ -5,5 +5,5 @@
   "description": "Extension permettant d'accéder rapidement à un ensemble de liens utiles.",
   "configCommand": "",
   "enabled": false,
-  "scopes": ["projects:read"]
+  "permissions": ["trimble.connect.api"]
 }
