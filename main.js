@@ -183,7 +183,7 @@ import {
 
     // 5. Mettre à jour le menu de l'extension pour correspondre au nouveau nom
     triconnectAPI.ui.setMenu({
-      title: "TEST",
+      title: "ECNA Liens URLs",
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
       command: "test_extension_clicked",
     });
