@@ -159,9 +159,6 @@ import {
   // == SÉQUENCE D'INITIALISATION SIMPLIFIÉE                         ==
   // ==================================================================
   try {
-    // 1. Afficher le chargement
-    renderLoading(mainContentDiv);
-
     // 2. Se connecter à l'API de l'espace de travail Trimble Connect
     triconnectAPI = await TrimbleConnectWorkspace.connect(
       window.parent,
