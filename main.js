@@ -11,6 +11,7 @@ import {
 // Exécution dans une fonction auto-appelée pour un environnement propre
 (async function () {
   const mainContentDiv = document.getElementById("mainContent");
+  const configBtn = document.getElementById("config-btn");
   let triconnectAPI;
   let globalAccessToken = null;
   let currentProjectId, configFolderId;
