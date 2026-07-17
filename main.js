@@ -1,4 +1,4 @@
-// On importe les fonctions depuis nos modules
+// On importe uniquement les fonctions d'UI dont nous avons besoin
 import { renderHomePage, renderLinkModal } from "./ui.js";
 import {
   fetchUserProjectRole,
@@ -8,12 +8,12 @@ import {
   saveLinksConfiguration,
 } from "./api.js";
 
-// Exécution dans une fonction auto-appelée pour ne pas polluer l'espace global
+// Exécution dans une fonction auto-appelée pour un environnement propre
 (async function () {
   const mainContentDiv = document.getElementById("mainContent");
-  const configBtn = document.getElementById("config-btn");
-
-  let triconnectAPI, globalAccessToken, currentProjectId, configFolderId;
+  let triconnectAPI;
+  let globalAccessToken = null;
+  let currentProjectId, configFolderId;
 
   let appState = {
     isConfigModeActive: false,
@@ -155,36 +155,55 @@ import {
     }
   }
 
-  // --- INITIALISATION ---
-
+  // ==================================================================
+  // == SÉQUENCE D'INITIALISATION SIMPLIFIÉE                         ==
+  // ==================================================================
   try {
+    // 1. Afficher le chargement
+    renderLoading(mainContentDiv);
+
+    // 2. Se connecter à l'API de l'espace de travail Trimble Connect
     triconnectAPI = await TrimbleConnectWorkspace.connect(
       window.parent,
-      () => {}, // On vide le callback pour être identique aux autres
+      () => {},
       30000,
     );
 
-    console.log("Demande de l'access token..."); // Gardons le log pour vérifier
+    // 3. Demander la permission pour l'access token
     globalAccessToken =
       await triconnectAPI.extension.requestPermission("accesstoken");
-    if (!globalAccessToken) throw new Error("L'Access Token est invalide.");
-    console.warn("Access Token récupéré au démarrage :", globalAccessToken);
-    console.log("Access Token reçu avec succès.");
-    const projectInfo = await triconnectAPI.project.getCurrentProject();
-    currentProjectId = projectInfo.id;
+    if (!globalAccessToken) {
+      throw new Error(
+        "L'Access Token est invalide ou n'a pas pu être récupéré.",
+      );
+    }
 
+    // 4. AFFICHER L'ACCESS TOKEN DANS LA CONSOLE (Objectif principal)
+    console.log("--- Access Token Utilisateur ---");
+    console.log(globalAccessToken);
+    console.log("---------------------------------");
+
+    // 5. Mettre à jour le menu de l'extension pour correspondre au nouveau nom
     triconnectAPI.ui.setMenu({
-      title: "ECNA Liens URLs",
+      title: "TEST",
       icon: "https://dorianlorenzato-max.github.io/trimble-connect-ecna-extension/logoEiffage.png",
-      command: "open_extension",
+      command: "test_extension_clicked",
     });
+    const project = await triconnectAPI.project.getCurrentProject();
+    if (!project || !project.id) {
+      throw new Error(
+        "Impossible de récupérer les informations du projet actuel.",
+      );
+    }
+    currentProjectId = project.id; // On assigne la valeur à la variable globale
+    console.log(`Projet actuel ID : ${currentProjectId}`);
 
+    // 6. Afficher la page d'accueil finale
     configBtn.addEventListener("click", () => {
       appState.isConfigModeActive = !appState.isConfigModeActive;
       if (!appState.isConfigModeActive) appState.editMode = "view";
       rerenderUI();
     });
-
     async function loadInitialDataAndRender() {
       try {
         mainContentDiv.innerHTML = "<p>Chargement...</p>";
